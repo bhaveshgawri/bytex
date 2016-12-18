@@ -1,20 +1,25 @@
-import sys
+import sys,  os
 from PyQt4 import QtGui, QtCore
 
 class Editor(QtGui.QMainWindow):
 	def __init__(self):
 		super(Editor,self).__init__()
-		self.setGeometry(100,100, 300, 300)
+		self.setGeometry(0,0, 600, 800)
+		self.setMinimumSize(600,350)
 		self.setWindowTitle("bytex")
-		#self.setWindowIcon(QtGui.QIcon())
 		
+		self.tabWidget = QtGui.QTabWidget(self)
+		self.setCentralWidget(self.tabWidget)
+		self.tabWidget.setTabsClosable(True)
+		self.tabWidget.setMovable(True)
+        
 #--------------------File Menu Actions-------------------#
 
 		newTabAction = QtGui.QAction("New File",self)
 		newTabAction.setShortcut("Ctrl+t")
 		newTabAction.setStatusTip("Create a new Document")
-		newTabAction.triggered.connect(self.close_editor)
-		
+		newTabAction.triggered.connect(self.new_file)
+
 		newWinAction = QtGui.QAction("New Window",self)
 		newWinAction.setShortcut("Ctrl+n")
 		newWinAction.setStatusTip("Open a new document in a new window")
@@ -23,7 +28,7 @@ class Editor(QtGui.QMainWindow):
 		openAction = QtGui.QAction("Open",self)
 		openAction.setShortcut("Ctrl+o")
 		openAction.setStatusTip("Open an existing document")
-		openAction.triggered.connect(self.close_editor)
+		openAction.triggered.connect(self.open_)
 		
 		saveAction = QtGui.QAction("Save",self)
 		saveAction.setShortcut("Ctrl+s")
@@ -33,7 +38,7 @@ class Editor(QtGui.QMainWindow):
 		saveAsAction = QtGui.QAction("Save As...",self)
 		saveAsAction.setShortcut("Ctrl+Shift+s")
 		saveAsAction.setStatusTip("Save this document as...")
-		saveAsAction.triggered.connect(self.close_editor)
+		saveAsAction.triggered.connect(self.save_as)
 		
 		closeAction = QtGui.QAction("Close",self)
 		closeAction.setShortcut("Ctrl+w")
@@ -88,11 +93,13 @@ class Editor(QtGui.QMainWindow):
 		clearAction.setStatusTip("Clear all the text from screen.")
 		clearAction.triggered.connect(self.clear_)
 		
-		insertAction = QtGui.QAction("Inseret Mode",self, checkable = True)
+		insertAction = QtGui.QAction("&Inseret Mode",self, checkable = True)
 		insertAction.setStatusTip("Toggle Insert Mode.")
 		insertAction.triggered.connect(lambda: self.insert_(insertAction))
 		
 #-------------------//Edit Menu Actions//-----------------#		
+		
+		self.statusBar()
 
 #---------------------Menu Bar Creation-------------------#
 
@@ -129,24 +136,41 @@ class Editor(QtGui.QMainWindow):
 
 #-------------------//Menu Bar Creation//-----------------#
 		
-		self.statusBar()
-		self.editor()
 		self.view()
-
+	
 #-------------------Function Declarations-----------------#
 	
 	def view(self):
 		self.show()
-	def editor(self):
-		self.textEdit = QtGui.QTextEdit()
-		self.setCentralWidget(self.textEdit)
-	
+
 #--------------------File Menu Functions------------------#	
 	
 	def close_editor(self):
 		sys.exit()
+	
+	def new_file(self):
+		self.textEdit = QtGui.QTextEdit(self.tabWidget)
+		self.tabWidget.addTab(self.textEdit, "Untitled " + str(self.tabWidget.count()+1))
 
 
+	def open_(self):
+		file = QtGui.QFileDialog.getOpenFileName(self, "Open File")
+		with open(file, 'r') as f:
+			data = f.read();
+			self.textEdit = QtGui.QTextEdit(self.tabWidget)
+			self.tabWidget.addTab(self.textEdit, os.path.basename(file))
+			self.textEdit.setText(data)
+			f.close()
+	
+	#def save(self):
+		
+	def save_as(self):
+		fileName = QtGui.QFileDialog.getSaveFileName(self, "Save File")
+		newFile = open(fileName, 'w')
+		data = self.textEdit.toPlainText()
+		newFile.write(data)
+		newFile.close()
+	
 #------------------//File Menu Functions//----------------#
 
 #--------------------Edit Menu Functions------------------#

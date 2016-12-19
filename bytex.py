@@ -43,7 +43,9 @@ class Editor(QtGui.QMainWindow):
 		closeAction = QtGui.QAction("Close",self)
 		closeAction.setShortcut("Ctrl+w")
 		closeAction.setStatusTip("Close the current document")
-		closeAction.triggered.connect(self.close_editor)
+		closeAction.triggered.connect(self.close_tab)
+		self.tabWidget.tabCloseRequested.connect(self.tabWidget.removeTab)
+		#  ^without this line 'x' on tabs won't work.
 
 		quitAction = QtGui.QAction("Quit",self)
 		quitAction.setShortcut("Ctrl+q")
@@ -93,9 +95,10 @@ class Editor(QtGui.QMainWindow):
 		clearAction.setStatusTip("Clear all the text from screen.")
 		clearAction.triggered.connect(self.clear_)
 		
-		insertAction = QtGui.QAction("&Inseret Mode",self, checkable = True)
-		insertAction.setStatusTip("Toggle Insert Mode.")
+		insertAction = QtGui.QAction("Insert Mode",self, checkable = True)
+		insertAction.setStatusTip("Toggle Insert Mode for all tabs.")
 		insertAction.triggered.connect(lambda: self.insert_(insertAction))
+
 		
 #-------------------//Edit Menu Actions//-----------------#		
 		
@@ -145,9 +148,6 @@ class Editor(QtGui.QMainWindow):
 
 #--------------------File Menu Functions------------------#	
 	
-	def close_editor(self):
-		sys.exit()
-	
 	def new_file(self):
 		self.textEdit = QtGui.QTextEdit(self.tabWidget)
 		self.tabWidget.addTab(self.textEdit, "Untitled " + str(self.tabWidget.count()+1))
@@ -171,42 +171,65 @@ class Editor(QtGui.QMainWindow):
 		newFile.write(data)
 		newFile.close()
 	
+	def close_tab(self,index):
+		self.tabWidget.removeTab(index)
+		if self.tabWidget.count() == 0:
+			sys.exit()
+
+	def close_editor(self):
+		sys.exit()
+
 #------------------//File Menu Functions//----------------#
 
 #--------------------Edit Menu Functions------------------#
 
 	def undo_(self):
-		self.textEdit.undo()
-	
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.undo()
+
 	def redo_(self):
-		self.textEdit.redo()
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.redo()
 	
 	def cut_(self):
-		self.textEdit.cut()
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.cut()
 	
 	def copy_(self):
-		self.textEdit.copy()
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.copy()
 	
 	def paste_(self):
-		self.textEdit.paste()
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.paste()
 	
 	def readOnly_(self, readOnlyAction):
 		if readOnlyAction.isChecked() is True:
-			self.textEdit.setReadOnly(True)
+			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+			for text_edit in text_edit_s:	
+				text_edit.setReadOnly(True)
 		else:
-			self.textEdit.setReadOnly(False)
+			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+			for text_edit in text_edit_s:
+				text_edit.setReadOnly(False)
 	
 	def selectAll_(self):
-		self.textEdit.selectAll()
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.selectAll()
 	
 	def clear_(self):
-		self.textEdit.clear()
+		self.text_edit = self.tabWidget.currentWidget()
+		self.text_edit.clear()
 	
 	def insert_(self, insertAction):
 		if insertAction.isChecked() is True:
-			self.textEdit.setOverwriteMode(True)
+			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+			for text_edit in text_edit_s:
+   				text_edit.setOverwriteMode(True)
 		else:
-			self.textEdit.setOverwriteMode(False)
+			items = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+			for text_edit in items:
+   				text_edit.setOverwriteMode(False)
 
 #------------------//Edit Menu Functions//----------------#
 	

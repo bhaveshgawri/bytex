@@ -6,13 +6,17 @@ class Editor(QtGui.QMainWindow):
 		super(Editor,self).__init__()
 		self.setGeometry(0,0, 600, 800)
 		self.setMinimumSize(600,350)
-		self.setWindowTitle("bytex")
+		self.setWindowTitle("bytex")		
 		
 		self.tabWidget = QtGui.QTabWidget(self)
 		self.setCentralWidget(self.tabWidget)
 		self.tabWidget.setTabsClosable(True)
 		self.tabWidget.setMovable(True)
-        
+		#self.tabWidget.setTabShape(QtGui.QTabWidget.Triangular)
+		
+		self.tabWidget.currentChanged.connect(self.name_of_window)		
+
+		
 #--------------------File Menu Actions-------------------#
 
 		newTabAction = QtGui.QAction("New File",self)
@@ -33,7 +37,7 @@ class Editor(QtGui.QMainWindow):
 		saveAction = QtGui.QAction("Save",self)
 		saveAction.setShortcut("Ctrl+s")
 		saveAction.setStatusTip("Save this document")
-		saveAction.triggered.connect(self.close_editor)
+		saveAction.triggered.connect(self.save)
 		
 		saveAsAction = QtGui.QAction("Save As...",self)
 		saveAsAction.setShortcut("Ctrl+Shift+s")
@@ -140,11 +144,18 @@ class Editor(QtGui.QMainWindow):
 #-------------------//Menu Bar Creation//-----------------#
 		
 		self.view()
-	
+		
+		self.fileList = []
+
 #-------------------Function Declarations-----------------#
 	
 	def view(self):
 		self.show()
+	def name_of_window(self):
+		self.tab_name = self.tabWidget.tabText(self.tabWidget.currentIndex())
+		self.setWindowTitle(self.tab_name + " - bytex")	
+		if self.tabWidget.count() is 0:
+			sys.exit()
 
 #--------------------File Menu Functions------------------#	
 	
@@ -155,24 +166,51 @@ class Editor(QtGui.QMainWindow):
 
 	def open_(self):
 		file = QtGui.QFileDialog.getOpenFileName(self, "Open File")
-		with open(file, 'r') as f:
-			data = f.read();
-			self.textEdit = QtGui.QTextEdit(self.tabWidget)
-			self.tabWidget.addTab(self.textEdit, os.path.basename(file))
-			self.textEdit.setText(data)
-			f.close()
-	
-	#def save(self):
+		f = open(file, 'r')
 		
+		self.textEdit = QtGui.QTextEdit(self.tabWidget)
+		self.tabWidget.addTab(self.textEdit, os.path.basename(file))
+		
+		self.fileList.append(file)
+
+		data = f.read();
+		self.textEdit.setText(data)
+		
+		f.close()
+
+	def save(self):
+		baseNames = []
+		for file in self.fileList:
+			baseNames.append(os.path.basename(file))
+		
+		self.tabName = self.tabWidget.tabText(self.tabWidget.currentIndex())	
+		
+		if not self.tabName in baseNames:
+			self.save_as()
+		else:
+			for item in self.fileList:
+				if self.tabName in item:
+					saveFile = open(item, 'w')
+					data = self.tabWidget.currentWidget().toPlainText()					
+					saveFile.write(data)
+					saveFile.close()
+
 	def save_as(self):
 		fileName = QtGui.QFileDialog.getSaveFileName(self, "Save File")
 		newFile = open(fileName, 'w')
-		data = self.textEdit.toPlainText()
+		
+		self.tabWidget.setTabText(self.tabWidget.currentIndex(), os.path.basename(fileName))
+		self.setWindowTitle(fileName + " - bytex")
+		
+		self.fileList.append(fileName)	
+
+		data = self.tabWidget.currentWidget().toPlainText()
 		newFile.write(data)
+		
 		newFile.close()
 	
-	def close_tab(self,index):
-		self.tabWidget.removeTab(index)
+	def close_tab(self):
+		self.tabWidget.removeTab(self.tabWidget.currentIndex())
 		if self.tabWidget.count() == 0:
 			sys.exit()
 

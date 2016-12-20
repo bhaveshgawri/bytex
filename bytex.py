@@ -1,5 +1,6 @@
 import sys,  os
 from PyQt4 import QtGui, QtCore
+from markdown_editor import web_edit
 
 class Editor(QtGui.QMainWindow):
 	def __init__(self):
@@ -117,6 +118,26 @@ class Editor(QtGui.QMainWindow):
 
 #------------------//Format Menu Actions//----------------#
 
+#---------------------Tool Menu Actions-------------------#
+		
+		terminalAction = QtGui.QAction("Open Terminal", self)
+		terminalAction.setShortcut("shift+alt+t")
+		terminalAction.setToolTip("Open bash at the locaiton of file in current tab.")
+		terminalAction.triggered.connect(self.openBash_)
+
+		newMarkDownFileAction = QtGui.QAction("Try Now",self)
+		newMarkDownFileAction.setShortcut("ctrl+shift+n")
+		newMarkDownFileAction.setStatusTip("Try the markdown editor now.")
+		newMarkDownFileAction.triggered.connect(self.openMarkEditor_)
+
+		openMarkDownFileAction = QtGui.QAction("Open",self)
+		openMarkDownFileAction.setShortcut("ctrl+shift+o")
+		openMarkDownFileAction.setStatusTip("Open a file in markdown editor.")
+		openMarkDownFileAction.triggered.connect(self.openMarkEditorFile_)
+
+#-------------------//Tool Menu Actions//-----------------#	
+
+
 #-----------------Misc. Actions and Signals---------------#
 		
 		self.tabWidget.currentChanged.connect(self.nameOfWindow_)
@@ -130,6 +151,7 @@ class Editor(QtGui.QMainWindow):
 		prevTabAction.triggered.connect(self.prevTab_)
 
 #--------------//Misc. Actions and Signals//--------------#	
+		
 		statusBar = self.statusBar()
 
 #---------------------Menu Bar Creation-------------------#
@@ -137,7 +159,8 @@ class Editor(QtGui.QMainWindow):
 		bar = self.menuBar()
 		file = bar.addMenu("File")
 		edit = bar.addMenu("Edit")
-		format_ = bar.addMenu("Format") 
+		format_ = bar.addMenu("Format")
+		tools = bar.addMenu("Tools") 
 
 		file.addAction(newTabAction)
 		file.addSeparator()
@@ -166,10 +189,18 @@ class Editor(QtGui.QMainWindow):
 		edit.addAction(insertAction)
 
 		format_.addAction(fontAction)
+		format_.addSeparator()
 		tabWidth = format_.addMenu("Tab Width")
 		tabWidth.addAction(action2)
 		tabWidth.addAction(action4)
 		tabWidth.addAction(action8)
+
+		tools.addAction(terminalAction)
+		tools.addSeparator()
+		markDown = tools.addMenu("Markdown Editor")
+		markDown.addAction(newMarkDownFileAction)
+		markDown.addAction(openMarkDownFileAction)
+		
 #-------------------//Menu Bar Creation//-----------------#
 		
 		self.view_()
@@ -218,14 +249,14 @@ class Editor(QtGui.QMainWindow):
 		for file in self.fileList:
 			baseNames.append(os.path.basename(file))
 		
-		self.tabName = self.tabWidget.tabText(self.tabWidget.currentIndex())	
+		self.tabName = self.tabWidget.tabText(self.tabWidget.currentIndex())
 		
 		if not self.tabName in baseNames:
 			self.saveAs_()
 		else:
-			for item in self.fileList:
-				if self.tabName in item:
-					saveFile = open(item, 'w')
+			for file_path in self.fileList:
+				if self.tabName == os.path.basename(file_path):
+					saveFile = open(file_path, 'w')
 					data = self.tabWidget.currentWidget().toPlainText()					
 					saveFile.write(data)
 					saveFile.close()
@@ -330,8 +361,32 @@ class Editor(QtGui.QMainWindow):
 				text_edit.setTabStopWidth(80)
 
 #-----------------//Format Menu Functions//---------------#	
+
+#--------------------Tool Menu Functions------------------#
 	
-	
+	def openBash_(self):
+		self.tabName = self.tabWidget.tabText(self.tabWidget.currentIndex())
+		flag=0
+		for item in self.fileList:
+			print(len(os.path.basename(item)))
+		for path_ in self.fileList:
+			if self.tabName == os.path.basename(path_):
+				os.system("gnome-terminal -e 'bash -c \"cd {}; exec bash\"'".format(path_[0:len(path_)-len(os.path.basename(path_))]))
+				flag=1
+				break
+		if flag == 0:
+			os.system("gnome-terminal -e 'bash -c \"cd ~/; exec bash\"'")
+
+	def openMarkEditor_(self):
+		os.system("gnome-terminal -e 'bash -c \"markdown_edit; exec bash\"'")
+
+
+	def openMarkEditorFile_(self):
+		mFilePath = QtGui.QFileDialog.getOpenFileName(self, "Open File")
+		os.system("gnome-terminal -e 'bash -c \"markdown_edit {}; exec bash\"'".format(mFilePath))
+
+#------------------//Tool Menu Functions//----------------#
+
 def run():
 	app = QtGui.QApplication(sys.argv)
 	new_editor = Editor()

@@ -1,6 +1,7 @@
 import sys,  os
 from PyQt4 import QtGui, QtCore
 from markdown_editor import web_edit
+import webbrowser, subprocess
 
 class Editor(QtGui.QMainWindow):
 	def __init__(self):
@@ -14,6 +15,7 @@ class Editor(QtGui.QMainWindow):
 		self.tabWidget.setTabsClosable(True)
 		self.tabWidget.setMovable(True)
 		#self.tabWidget.setTabShape(QtGui.QTabWidget.Triangular)
+
 			
 #--------------------File Menu Actions-------------------#
 
@@ -100,7 +102,6 @@ class Editor(QtGui.QMainWindow):
 		insertAction = QtGui.QAction("Insert Mode",self, checkable = True)
 		insertAction.setStatusTip("Toggle Insert Mode for all tabs.")
 		insertAction.triggered.connect(lambda: self.insert_(insertAction))
-
 		
 #-------------------//Edit Menu Actions//-----------------#
 
@@ -120,7 +121,7 @@ class Editor(QtGui.QMainWindow):
 
 #---------------------Tool Menu Actions-------------------#
 		
-		terminalAction = QtGui.QAction("Open Terminal", self)
+		terminalAction = QtGui.QAction("Open bash here", self)
 		terminalAction.setShortcut("shift+alt+t")
 		terminalAction.setToolTip("Open bash at the locaiton of file in current tab.")
 		terminalAction.triggered.connect(self.openBash_)
@@ -135,8 +136,19 @@ class Editor(QtGui.QMainWindow):
 		openMarkDownFileAction.setStatusTip("Open a file in markdown editor.")
 		openMarkDownFileAction.triggered.connect(self.openMarkEditorFile_)
 
-#-------------------//Tool Menu Actions//-----------------#	
+		selectedTextSearchAction = QtGui.QAction("DuckDuckGo selected text.", self)
+		selectedTextSearchAction.setShortcut("alt+d")
+		selectedTextSearchAction.triggered.connect(self.selectedTextSearch_)
+		
+		stackOverflowAction = QtGui.QAction("Search stackOverflow", self)
+		stackOverflowAction.setShortcut("alt+s")
+		stackOverflowAction.triggered.connect(self.stackOverFlowSearch_)
 
+		gitHubAction = QtGui.QAction("Search GitHub", self)
+		gitHubAction.setShortcut("alt+g")
+		gitHubAction.triggered.connect(self.gitHubSearch_)
+
+#-------------------//Tool Menu Actions//-----------------#	
 
 #-----------------Misc. Actions and Signals---------------#
 		
@@ -200,7 +212,11 @@ class Editor(QtGui.QMainWindow):
 		markDown = tools.addMenu("Markdown Editor")
 		markDown.addAction(newMarkDownFileAction)
 		markDown.addAction(openMarkDownFileAction)
-		
+		tools.addSeparator()
+		tools.addAction(selectedTextSearchAction)
+		tools.addAction(stackOverflowAction)
+		tools.addAction(gitHubAction)
+
 #-------------------//Menu Bar Creation//-----------------#
 		
 		self.view_()
@@ -212,17 +228,25 @@ class Editor(QtGui.QMainWindow):
 	def view_(self):
 		self.show()
 	
-	def nameOfWindow_(self):
+	def nameOfWindow_(self): 
 		self.tab_name = self.tabWidget.tabText(self.tabWidget.currentIndex())
 		self.setWindowTitle(self.tab_name + " - bytex")	
+
 		if self.tabWidget.count() is 0:
 			sys.exit()
+
 	
 	def nextTab_(self):
 		self.tabWidget.setCurrentIndex(self.tabWidget.CurrentIndex() + 1)
 	
 	def prevTab_(self):
 		self.tabWidget.setCurrentIndex(self.tabWidget.CurrentIndex() - 1)
+
+	def selectedText_(self):
+		text__edit = self.tabWidget.currentWidget()
+		cursor = text__edit.textCursor()
+		selectedString = cursor.selectedText()
+		return selectedString
 
 #--------------------File Menu Functions------------------#	
 	
@@ -378,13 +402,34 @@ class Editor(QtGui.QMainWindow):
 			os.system("gnome-terminal -e 'bash -c \"cd ~/; exec bash\"'")
 
 	def openMarkEditor_(self):
-		os.system("gnome-terminal -e 'bash -c \"markdown_edit; exec bash\"'")
-
+		#os.system("gnome-terminal -e 'bash -c \"markdown_edit; exec bash\"'")
+		#^ this uses a dfferent shell but final result of both is same wrt markdown editor
+		subprocess.Popen("markdown_edit")
 
 	def openMarkEditorFile_(self):
 		mFilePath = QtGui.QFileDialog.getOpenFileName(self, "Open File")
-		os.system("gnome-terminal -e 'bash -c \"markdown_edit {}; exec bash\"'".format(mFilePath))
+		#os.system("gnome-terminal -e 'bash -c \"markdown_edit {}; exec bash\"'".format(mFilePath))
+		subprocess.Popen("markdown_edit" + mFilePath)
 
+	def selectedTextSearch_(self):
+		searchString = self.selectedText_()
+		if searchString == "":
+			pass
+		else:
+			webbrowser.open("https://duckduckgo.com/?q={}&t=hs&ia=web".format(searchString))			
+
+	def stackOverFlowSearch_(self):
+		searchString, true = QtGui.QInputDialog.getText(self, 'stackOverflow.com', 'Enter query')
+		if true:
+			webbrowser.open("http://stackoverflow.com/search?q={}".format(searchString))
+		else:
+			pass
+	def gitHubSearch_(self):
+		searchString, true = QtGui.QInputDialog.getText(self, 'github.com', 'Enter query')
+		if true:
+			webbrowser.open("https://github.com/search?utf8=✓&q={}".format(searchString))
+		else:
+			pass
 #------------------//Tool Menu Functions//----------------#
 
 def run():

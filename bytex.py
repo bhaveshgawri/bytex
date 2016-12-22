@@ -16,47 +16,6 @@ class Editor(QtGui.QMainWindow):
 		self.tabWidget.setMovable(True)
 		#self.tabWidget.setTabShape(QtGui.QTabWidget.Triangular)
 
-#--------------------File Menu Actions-------------------#
-
-		newTabAction = QtGui.QAction("New File",self)
-		newTabAction.setShortcut("Ctrl+e")
-		newTabAction.setStatusTip("Create a new Document")
-		newTabAction.triggered.connect(self.newFile_)
-
-		newWinAction = QtGui.QAction("New Window",self)
-		newWinAction.setShortcut("Ctrl+n")
-		newWinAction.setStatusTip("Open a new document in a new window")
-		newWinAction.triggered.connect(self.newWindow_)
-		
-		openAction = QtGui.QAction("Open",self)
-		openAction.setShortcut("Ctrl+o")
-		openAction.setStatusTip("Open an existing document")
-		openAction.triggered.connect(self.open_)
-		
-		saveAction = QtGui.QAction("Save",self)
-		saveAction.setShortcut("Ctrl+s")
-		saveAction.setStatusTip("Save this document")
-		saveAction.triggered.connect(self.save_)
-		
-		saveAsAction = QtGui.QAction("Save As...",self)
-		saveAsAction.setShortcut("Ctrl+Shift+s")
-		saveAsAction.setStatusTip("Save this document as...")
-		saveAsAction.triggered.connect(self.saveAs_)
-		
-		closeAction = QtGui.QAction("Close",self)
-		closeAction.setShortcut("Ctrl+w")
-		closeAction.setStatusTip("Close the current document")
-		closeAction.triggered.connect(self.closeTab_)
-		self.tabWidget.tabCloseRequested.connect(self.tabWidget.removeTab)
-		#  ^without this line 'x' on tabs won't work.
-
-		quitAction = QtGui.QAction("Quit",self)
-		quitAction.setShortcut("Ctrl+q")
-		quitAction.setStatusTip("Close all documents and EXIT.")
-		quitAction.triggered.connect(self.closeEditor_)
-
-#------------------//File Menu Actions//-----------------#
-
 #--------------------Edit Menu Actions-------------------#
 
 		undoAction = QtGui.QAction("Undo",self)
@@ -118,6 +77,10 @@ class Editor(QtGui.QMainWindow):
 		action16 = action_group.addAction(QtGui.QAction("Tab Width:16", self, checkable=True))
 		action_group.triggered.connect(lambda: self.setTabWidth_(action_group, action2, action4, action8, action12, action16))
 
+		autoIndentAction = QtGui.QAction("Auto Indent", self, checkable = True)
+		autoIndentAction.setStatusTip("Toggle Auto Indentation")
+		autoIndentAction.triggered.connect(lambda: self.setAutoIndent_(autoIndentAction))
+
 #------------------//Format Menu Actions//----------------#
 
 #---------------------Tool Menu Actions-------------------#
@@ -164,6 +127,48 @@ class Editor(QtGui.QMainWindow):
 		prevTabAction.triggered.connect(self.prevTab_)
 
 #--------------//Misc. Actions and Signals//--------------#	
+
+#--------------------File Menu Actions-------------------#
+
+		newTabAction = QtGui.QAction("New File",self)
+		newTabAction.setShortcut("Ctrl+e")
+		newTabAction.setStatusTip("Create a new Document")
+		newTabAction.triggered.connect(lambda: self.newFile_(insertAction, readOnlyAction, autoIndentAction))
+
+		newWinAction = QtGui.QAction("New Window",self)
+		newWinAction.setShortcut("Ctrl+n")
+		newWinAction.setStatusTip("Open a new document in a new window")
+		newWinAction.triggered.connect(self.newWindow_)
+		
+		openAction = QtGui.QAction("Open",self)
+		openAction.setShortcut("Ctrl+o")
+		openAction.setStatusTip("Open an existing document")
+		openAction.triggered.connect(lambda: self.open_(insertAction, readOnlyAction, autoIndentAction))
+		
+		saveAction = QtGui.QAction("Save",self)
+		saveAction.setShortcut("Ctrl+s")
+		saveAction.setStatusTip("Save this document")
+		saveAction.triggered.connect(self.save_)
+		
+		saveAsAction = QtGui.QAction("Save As...",self)
+		saveAsAction.setShortcut("Ctrl+Shift+s")
+		saveAsAction.setStatusTip("Save this document as...")
+		saveAsAction.triggered.connect(self.saveAs_)
+		
+		closeAction = QtGui.QAction("Close",self)
+		closeAction.setShortcut("Ctrl+w")
+		closeAction.setStatusTip("Close the current document")
+		closeAction.triggered.connect(self.closeTab_)
+		self.tabWidget.tabCloseRequested.connect(self.tabWidget.removeTab)
+		#  ^without this line 'x' on tabs won't work.
+
+		quitAction = QtGui.QAction("Quit",self)
+		quitAction.setShortcut("Ctrl+q")
+		quitAction.setStatusTip("Close all documents and EXIT.")
+		quitAction.triggered.connect(self.closeEditor_)
+
+#------------------//File Menu Actions//-----------------#
+
 		
 		statusBar = self.statusBar()
 
@@ -209,6 +214,8 @@ class Editor(QtGui.QMainWindow):
 		tabWidth.addAction(action8)
 		tabWidth.addAction(action12)
 		tabWidth.addAction(action16)
+		format_.addSeparator()
+		format_.addAction(autoIndentAction)
 
 		tools.addAction(terminalAction)
 		tools.addSeparator()
@@ -222,23 +229,27 @@ class Editor(QtGui.QMainWindow):
 
 #-------------------//Menu Bar Creation//-----------------#
 		
-		self.view_()
+		self.view_(insertAction, readOnlyAction, autoIndentAction)
 		
 		self.fileList = []
 
 #-------------------Function Declarations-----------------#
 	
-	def view_(self):
+	def view_(self, insertAction, readOnlyAction, autoIndentAction):
+		#these args are supplied for the sake of function 'newAndOpenFuncs_' 
+		self.newFile_(insertAction, readOnlyAction, autoIndentAction)
 		self.show()
 	
 	def nameOfWindow_(self): 
 		self.tab_name = self.tabWidget.tabText(self.tabWidget.currentIndex())
-		self.setWindowTitle(self.tab_name + " - bytex")	
+		self.setWindowTitle(self.tab_name + " - bytex")
+
+		text__edit = self.tabWidget.currentWidget()
+		text__edit.cursorPositionChanged.connect(self.marginWidth_)
 
 		if self.tabWidget.count() is 0:
 			sys.exit()
 
-	
 	def nextTab_(self):
 		self.tabWidget.setCurrentIndex(self.tabWidget.CurrentIndex() + 1)
 	
@@ -250,16 +261,68 @@ class Editor(QtGui.QMainWindow):
 		selectedString = text__edit.selectedText()
 		return selectedString
 
+	def setDefaultFont_(self, textEdit):
+		try:
+			self.font = QtGui.QFont("Ubuntu", 14)
+		except:
+			self.font = QtGui.QFont("Sans Serif", 14)
+				
+		textEdit.setFont(self.font)
+		textEdit.setMarginsFont(self.font)
+
+	def cursorPosition_(self):
+		text__edit = self.tabWidget.currentWidget()
+		self.line_, self.index_ = text__edit.getCursorPosition()
+		return self.line_, self.index_
+	
+	def marginWidth_(self):
+		
+		_line, _index = self.cursorPosition_() 
+
+		if _line < 10:
+			self.margin = QtGui.QFontMetrics(self.font).width("0")
+		elif _line < 100:
+			self.margin = QtGui.QFontMetrics(self.font).width("00")
+		elif _line < 1000:
+			self.margin = QtGui.QFontMetrics(self.font).width("000")
+		elif _line < 10000:
+			self.margin = QtGui.QFontMetrics(self.font).width("0000")
+		elif _line < 100000:
+			self.margin = QtGui.QFontMetrics(self.font).width("00000")
+		else:
+			self.margin = QtGui.QFontMetrics(self.font).width("000000000")
+
+		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+		for text_edit in text_edit_s:
+   			text_edit.setMarginWidth(1, self.margin + 5)				
+
+		#PROBLEM in this function BUT the output is correct
+		#print(_line, _index) #after commenting the return statement
+		#dont know why this function is getting called the no of times
+		#that tab has been visited
+		#if a tab is visited 3 times this func is getting called 3 times
+		#for that tab
+		#signal is coming from fucntion 'nameOfWindow_'
+
+	def newAndOpenFuncs_(self, textEdit, insertAction, readOnlyAction, autoIndentAction):
+		#these funcs are to be called every time for each new file so that properties may
+		#apply to those files also 
+		self.setDefaultFont_(textEdit)
+		self.setMarginNumbers_()
+		self.insert_(insertAction)
+		self.readOnly_(readOnlyAction)
+		self.setAutoIndent_(autoIndentAction) 
+
 #--------------------File Menu Functions------------------#	
 	
-	def newFile_(self):
+	def newFile_(self, insertAction, readOnlyAction, autoIndentAction):
 		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
 		self.tabWidget.addTab(self.textEdit, "Untitled " + str(self.tabWidget.count()+1))
+		
+		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
 
-	def newWindow_(self):
-		Editor()
 
-	def open_(self):
+	def open_(self, insertAction, readOnlyAction, autoIndentAction):
 		oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
 		file = open(oldFileName, 'r')
 		
@@ -267,7 +330,9 @@ class Editor(QtGui.QMainWindow):
 		self.tabWidget.addTab(self.textEdit, os.path.basename(oldFileName))
 		
 		self.fileList.append(oldFileName)
-		
+
+		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
+
 		data = file.read();
 		self.textEdit.setText(data)
 
@@ -304,6 +369,9 @@ class Editor(QtGui.QMainWindow):
 		
 		file.close()
 	
+	def newWindow_(self):
+		Editor()
+
 	def closeTab_(self):
 		self.tabWidget.removeTab(self.tabWidget.currentIndex())
 
@@ -381,22 +449,42 @@ class Editor(QtGui.QMainWindow):
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(2)
+				text_edit.setIndentationWidth(2)
 		elif action_group.checkedAction() is action4:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(4)
+				text_edit.setIndentationWidth(4)
 		elif action_group.checkedAction() is action8:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(8)
+				text_edit.setIndentationWidth(8)
 		elif action_group.checkedAction() is action12:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(12)
+				text_edit.setIndentationWidth(12)
 		elif action_group.checkedAction() is action16:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(16)
+				text_edit.setIndentationWidth(16)
+	
+	def setAutoIndent_(self, autoIndentAction):
+		if autoIndentAction.isChecked() is True:
+				text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+				for text_edit in text_edit_s:
+					text_edit.setAutoIndent(True)
+		else:
+			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+			for text_edit in text_edit_s:
+				text_edit.setAutoIndent(False)
+
+	def setMarginNumbers_(self):
+		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+		for text_edit in text_edit_s:
+			text_edit.setMarginLineNumbers(1, True)		
 
 #-----------------//Format Menu Functions//---------------#	
 
@@ -417,12 +505,13 @@ class Editor(QtGui.QMainWindow):
 
 	def openMarkEditor_(self):
 		#os.system("gnome-terminal -e 'bash -c \"markdown_edit; exec bash\"'")
-		#^ this uses a dfferent shell but final result of both is same wrt markdown editor
+		#either ^ or v
 		subprocess.Popen("markdown_edit")
 
 	def openMarkEditorFile_(self):
 		mFilePath = QtGui.QFileDialog.getOpenFileName(self, "Open File")
 		#os.system("gnome-terminal -e 'bash -c \"markdown_edit {}; exec bash\"'".format(mFilePath))
+		#either ^ or v
 		subprocess.Popen("markdown_edit" + mFilePath)
 
 	def selectedTextSearch_(self):

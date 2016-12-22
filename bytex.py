@@ -5,7 +5,7 @@ from markdown_editor import web_edit
 class Editor(QtGui.QMainWindow):
 	def __init__(self):
 		super(Editor, self).__init__()
-		#	print (help(Editor))
+		#print (help(Editor))
 		self.setGeometry(0,0, 600, 800)
 		self.setMinimumSize(600,350)
 		self.setWindowTitle("bytex")		
@@ -69,15 +69,16 @@ class Editor(QtGui.QMainWindow):
 		fontAction.setStatusTip("Set the font type, style and size.")
 		fontAction.triggered.connect(self.setFont_)
 
-		action_group = QtGui.QActionGroup(self, exclusive = True)
-		action2 = action_group.addAction(QtGui.QAction("Tab Width:2", self, checkable=True))
-		action4 = action_group.addAction(QtGui.QAction("Tab Width:4", self, checkable=True))
-		action8 = action_group.addAction(QtGui.QAction("Tab Width:8", self, checkable=True))
-		action12 = action_group.addAction(QtGui.QAction("Tab Width:12", self, checkable=True))
-		action16 = action_group.addAction(QtGui.QAction("Tab Width:16", self, checkable=True))
-		action_group.triggered.connect(lambda: self.setTabWidth_(action_group, action2, action4, action8, action12, action16))
+		tab_action_group = QtGui.QActionGroup(self, exclusive = True)
+		action2 = tab_action_group.addAction(QtGui.QAction("Tab Width:2", self, checkable=True))
+		action4 = tab_action_group.addAction(QtGui.QAction("Tab Width:4", self, checkable=True))
+		action8 = tab_action_group.addAction(QtGui.QAction("Tab Width:8", self, checkable=True))
+		action12 = tab_action_group.addAction(QtGui.QAction("Tab Width:12", self, checkable=True))
+		action16 = tab_action_group.addAction(QtGui.QAction("Tab Width:16", self, checkable=True))
+		tab_action_group.triggered.connect(lambda: self.setTabWidth_(tab_action_group, action2, action4, action8, action12, action16))
 
 		autoIndentAction = QtGui.QAction("Auto Indent", self, checkable = True)
+		autoIndentAction.setChecked(True)
 		autoIndentAction.setStatusTip("Toggle Auto Indentation")
 		autoIndentAction.triggered.connect(lambda: self.setAutoIndent_(autoIndentAction))
 
@@ -230,71 +231,115 @@ class Editor(QtGui.QMainWindow):
 #-------------------//Menu Bar Creation//-----------------#
 		
 		self.view_(insertAction, readOnlyAction, autoIndentAction)
-		
+
 		self.fileList = []
 
 #-------------------Function Declarations-----------------#
 	
 	def view_(self, insertAction, readOnlyAction, autoIndentAction):
 		#these args are supplied for the sake of function 'newAndOpenFuncs_' 
+		
+		#to createt a new file as soon as the editor is opened
 		self.newFile_(insertAction, readOnlyAction, autoIndentAction)
+		
+		#to show the editor on the screen
 		self.show()
 	
 	def nameOfWindow_(self): 
+		"""
+			called from the 'currentChanged' signal
+			works when the current tab changes
+
+		"""
+
+		#sets the name of the currnt file as title of the window
 		self.tab_name = self.tabWidget.tabText(self.tabWidget.currentIndex())
 		self.setWindowTitle(self.tab_name + " - bytex")
 
+		#changing the width of margin where numbersa are displayed
 		text__edit = self.tabWidget.currentWidget()
-		text__edit.cursorPositionChanged.connect(self.marginWidth_)
+		if self.tabWidget.count() > 0:
+			text__edit.cursorPositionChanged.connect(self.marginWidth_)
 
+			self.marginWidth_()
+			#causes some errors which does not affect the functioning
+			#if removed margin size will not automatically dec/inc immediately
+			#after the tab change 
+
+		#closes the editor if number of tabs is zero
 		if self.tabWidget.count() is 0:
 			sys.exit()
 
 	def nextTab_(self):
+		"""
+			connected to nextTabAction
+			to set the next tab active
+		"""
 		self.tabWidget.setCurrentIndex(self.tabWidget.CurrentIndex() + 1)
 	
 	def prevTab_(self):
+		"""
+			connected to prevTabAction
+			to set the previous tab active
+		"""
 		self.tabWidget.setCurrentIndex(self.tabWidget.CurrentIndex() - 1)
 
 	def selectedText_(self):
+		"""
+			this function returns the selected text
+			in the current tab
+		"""
 		text__edit = self.tabWidget.currentWidget()
 		selectedString = text__edit.selectedText()
 		return selectedString
 
 	def setDefaultFont_(self, textEdit):
+		"""
+			this fucntion set the default font
+			for the current tab and number margin 
+		"""
 		try:
 			self.font = QtGui.QFont("Ubuntu", 14)
 		except:
 			self.font = QtGui.QFont("Sans Serif", 14)
-				
+		
 		textEdit.setFont(self.font)
 		textEdit.setMarginsFont(self.font)
 
 	def cursorPosition_(self):
+		"""
+			this function returns the current position
+			of the cursor
+		"""
 		text__edit = self.tabWidget.currentWidget()
 		self.line_, self.index_ = text__edit.getCursorPosition()
 		return self.line_, self.index_
 	
 	def marginWidth_(self):
-		
-		_line, _index = self.cursorPosition_() 
+		"""
+			this funciton sets the width of the numbers margin
+			in all the tabs
+		"""
+		text__edit = self.tabWidget.currentWidget()
 
-		if _line < 10:
-			self.margin = QtGui.QFontMetrics(self.font).width("0")
-		elif _line < 100:
-			self.margin = QtGui.QFontMetrics(self.font).width("00")
-		elif _line < 1000:
-			self.margin = QtGui.QFontMetrics(self.font).width("000")
-		elif _line < 10000:
-			self.margin = QtGui.QFontMetrics(self.font).width("0000")
-		elif _line < 100000:
-			self.margin = QtGui.QFontMetrics(self.font).width("00000")
+		#l is the number of lines in the current tab
+		l = text__edit.lines()
+		if l < 10:
+			margin = QtGui.QFontMetrics(self.font).width("0")
+		elif l < 100:
+			margin = QtGui.QFontMetrics(self.font).width("00")
+		elif l < 1000:
+			margin = QtGui.QFontMetrics(self.font).width("000")
+		elif l < 10000:
+			margin = QtGui.QFontMetrics(self.font).width("0000")
+		elif l < 100000:
+			margin = QtGui.QFontMetrics(self.font).width("00000")
 		else:
-			self.margin = QtGui.QFontMetrics(self.font).width("000000000")
-
+			margin = QtGui.QFontMetrics(self.font).width("000000000")
+		
 		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 		for text_edit in text_edit_s:
-   			text_edit.setMarginWidth(1, self.margin + 5)				
+   			text_edit.setMarginWidth(1, margin + 5)				
 
 		#PROBLEM in this function BUT the output is correct
 		#print(_line, _index) #after commenting the return statement
@@ -304,9 +349,21 @@ class Editor(QtGui.QMainWindow):
 		#for that tab
 		#signal is coming from fucntion 'nameOfWindow_'
 
+	def setMarginNumbers_(self):
+		"""
+			this functiion set the numbers in the margin
+			in all the tabs
+		"""
+		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+		for text_edit in text_edit_s:
+			text_edit.setMarginLineNumbers(1, True)
+
 	def newAndOpenFuncs_(self, textEdit, insertAction, readOnlyAction, autoIndentAction):
-		#these funcs are to be called every time for each new file so that properties may
-		#apply to those files also 
+		"""
+			these funcs are to be called every time for each
+			new tab so that previously active properties may 
+			apply to those tabs also 
+		"""
 		self.setDefaultFont_(textEdit)
 		self.setMarginNumbers_()
 		self.insert_(insertAction)
@@ -316,37 +373,59 @@ class Editor(QtGui.QMainWindow):
 #--------------------File Menu Functions------------------#	
 	
 	def newFile_(self, insertAction, readOnlyAction, autoIndentAction):
+		"""
+			this function is connected to 'newTabAction'
+		"""
+
+		#adds a new tab
 		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
 		self.tabWidget.addTab(self.textEdit, "Untitled " + str(self.tabWidget.count()+1))
 		
+		#to apply prev. active props to newly opened tabs
 		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
 
 
 	def open_(self, insertAction, readOnlyAction, autoIndentAction):
+		"""
+			this function is connnected to 'openAction'
+		"""
+
+		#open a file from local storage
 		oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
 		file = open(oldFileName, 'r')
 		
+		#add a new tab to editor
 		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
 		self.tabWidget.addTab(self.textEdit, os.path.basename(oldFileName))
 		
+		#append path of this file to a list
 		self.fileList.append(oldFileName)
 
-		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
-
+		#read the data from file and set it to editor and close the file
 		data = file.read();
 		self.textEdit.setText(data)
-
 		file.close()
 
+		#to apply prev. active props to newly opened tabs
+		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
+
 	def save_(self):
+		"""
+			this function is connected to 'saveAction'
+		"""
 		baseNames = []
+		
+		#storing the names of all open documens
 		for file in self.fileList:
 			baseNames.append(os.path.basename(file))
 		
+		#set the name of the tab as the currently opened document
 		self.tabName = self.tabWidget.tabText(self.tabWidget.currentIndex())
 		
+		#save the file with a new name if it does not exist
 		if not self.tabName in baseNames:
 			self.saveAs_()
+		#save it to the path from where it was opened
 		else:
 			for file_path in self.fileList:
 				if self.tabName == os.path.basename(file_path):
@@ -356,29 +435,50 @@ class Editor(QtGui.QMainWindow):
 					saveFile.close()
 
 	def saveAs_(self):
+		"""
+			this funciton is connected to 'saveAsAction'
+		"""
+
+		#open a file from local storage
 		newFileName = QtGui.QFileDialog.getSaveFileName(self, "Save File")
 		file = open(newFileName, 'w')
 		
 		self.tabWidget.setTabText(self.tabWidget.currentIndex(), os.path.basename(newFileName))
 		self.setWindowTitle(newFileName + " - bytex")
 		
+		#append path of this file to a list
 		self.fileList.append(newFileName)	
 
+		#get the data from editor and write it to file and close the file
 		data = self.tabWidget.currentWidget().text()
 		file.write(data)
-		
 		file.close()
 	
 	def newWindow_(self):
+		"""
+			this function is connected to 'newWinAction'
+		"""
+		# call a new Editor object to create a new window
 		Editor()
 
 	def closeTab_(self):
+		"""
+			this fucntion is connected to 'closeAction'
+		"""
+
+		#removes the current tab
 		self.tabWidget.removeTab(self.tabWidget.currentIndex())
 
+		#if tab count is zero close the editor
 		if self.tabWidget.count() == 0:
 			sys.exit()
 
 	def closeEditor_(self):
+		"""
+			this function is connected to 'closeAction'
+		"""
+		
+		#close the editor
 		sys.exit()
 
 #------------------//File Menu Functions//----------------#
@@ -386,48 +486,95 @@ class Editor(QtGui.QMainWindow):
 #--------------------Edit Menu Functions------------------#
 
 	def undo_(self):
+		"""
+			this function is connected to 'undoAction'
+		"""
+		
+		#undo the current change
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.undo()
 
 	def redo_(self):
+		"""
+			this function is connected to 'redoAction'
+		"""
+		
+		#redo the last change
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.redo()
 	
 	def cut_(self):
+		"""
+			this function is connected to 'cutAction'
+		"""
+		
+		#cut the selected text from the current tab
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.cut()
 	
 	def copy_(self):
+		"""
+			this function is connected to 'copyAction'
+		"""
+		
+		#copy the selected text from the current tab
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.copy()
 	
 	def paste_(self):
+		"""
+			this function is connected to 'pasteAction'
+		"""
+		
+		#paste the selected text from the current tab
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.paste()
 	
 	def readOnly_(self, readOnlyAction):
+		"""
+			this function is connected to 'readOnlyAction'
+		"""
+		
+		#set the text in all tabs to readOnly
 		if readOnlyAction.isChecked() is True:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:	
 				text_edit.setReadOnly(True)
+		#undo the readOnly action
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setReadOnly(False)
 	
 	def selectAll_(self):
+		"""
+			this function is connected to 'selectAllAction'
+		"""
+		
+		#select all the text from the current tab
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.selectAll()
 	
 	def clear_(self):
+		"""
+			this function is connected to 'clearAction'
+		"""
+		
+		#clear all the text from the current tab
 		self.text_edit = self.tabWidget.currentWidget()
 		self.text_edit.clear()
 	
 	def insert_(self, insertAction):
+		"""
+			this function is connected to 'insertAction'
+		"""
+		
+		#enable the insert mode in all the tabs
 		if insertAction.isChecked() is True:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
    				text_edit.setOverwriteMode(True)
+		#disable the insert mode in all tabs
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
@@ -438,83 +585,115 @@ class Editor(QtGui.QMainWindow):
 #-------------------Format Menu Functions-----------------#	
 
 	def setFont_(self):
+		"""
+			this function is connected to fontAciton
+		"""
+
+		#opens a dialog to choose font, font-style and font-size from
 		font, true = QtGui.QFontDialog.getFont()
 		if true:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setFont(font)
 	
-	def setTabWidth_(self,action_group, action2, action4, action8, action12, action16):
-		if action_group.checkedAction() is action2:
+	def setTabWidth_(self,tab_action_group, action2, action4, action8, action12, action16):
+		"""
+			this function is connected to 'tab_action_group'
+		"""
+
+		#set the tab width and indentation width
+		if tab_action_group.checkedAction() is action2:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(2)
 				text_edit.setIndentationWidth(2)
-		elif action_group.checkedAction() is action4:
+		elif tab_action_group.checkedAction() is action4:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(4)
 				text_edit.setIndentationWidth(4)
-		elif action_group.checkedAction() is action8:
+		elif tab_action_group.checkedAction() is action8:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(8)
 				text_edit.setIndentationWidth(8)
-		elif action_group.checkedAction() is action12:
+		elif tab_action_group.checkedAction() is action12:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(12)
 				text_edit.setIndentationWidth(12)
-		elif action_group.checkedAction() is action16:
+		elif tab_action_group.checkedAction() is action16:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setTabWidth(16)
 				text_edit.setIndentationWidth(16)
 	
 	def setAutoIndent_(self, autoIndentAction):
+		"""
+			this function is connected to 'autoIndentAction'
+		"""
+
+		#enables the auto indentation
 		if autoIndentAction.isChecked() is True:
 				text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 				for text_edit in text_edit_s:
 					text_edit.setAutoIndent(True)
+		#disables the auto indentation
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
 				text_edit.setAutoIndent(False)
 
-	def setMarginNumbers_(self):
-		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
-		for text_edit in text_edit_s:
-			text_edit.setMarginLineNumbers(1, True)		
-
 #-----------------//Format Menu Functions//---------------#	
-
+		
 #--------------------Tool Menu Functions------------------#
 	
 	def openBash_(self):
+		"""
+			this function is connected to 'terminalAction'
+			it opens the bash with the current directioy set 
+			to the location of the file if it exists else in the home
+		"""
+
 		self.tabName = self.tabWidget.tabText(self.tabWidget.currentIndex())
+		
 		flag=0
-		for item in self.fileList:
-			print(len(os.path.basename(item)))
+
+		#if file name exists in the path list, open bash in the path
 		for path_ in self.fileList:
 			if self.tabName == os.path.basename(path_):
 				os.system("gnome-terminal -e 'bash -c \"cd {}; exec bash\"'".format(path_[0:len(path_)-len(os.path.basename(path_))]))
 				flag=1
 				break
+		#else in the home directory
 		if flag == 0:
 			os.system("gnome-terminal -e 'bash -c \"cd ~/; exec bash\"'")
 
 	def openMarkEditor_(self):
+		"""
+			this function is connected to 'newMarkDownFileAction'
+			it opens a markdown editor with an empty screen in the 
+			webbrowser
+		"""
+
 		#os.system("gnome-terminal -e 'bash -c \"markdown_edit; exec bash\"'")
 		#either ^ or v
 		subprocess.Popen("markdown_edit")
 
 	def openMarkEditorFile_(self):
+		"""
+			this function is connected to 'openMarkDownFileAction'
+			it opens a file to edit in the markdown editor
+		"""
 		mFilePath = QtGui.QFileDialog.getOpenFileName(self, "Open File")
-		#os.system("gnome-terminal -e 'bash -c \"markdown_edit {}; exec bash\"'".format(mFilePath))
-		#either ^ or v
-		subprocess.Popen("markdown_edit" + mFilePath)
+		os.system("gnome-terminal -e 'bash -c \"markdown_edit {}; exec bash\"'".format(mFilePath))
+		
 
 	def selectedTextSearch_(self):
+		"""
+			this function is connected to 'selectedTextSearchAction'
+			it searches the selected text on the screen on DuckDuckGo
+		"""
 		searchString = self.selectedText_()
 		if searchString == "":
 			pass
@@ -522,12 +701,24 @@ class Editor(QtGui.QMainWindow):
 			webbrowser.open("https://duckduckgo.com/?q={}&t=hs&ia=web".format(searchString))			
 
 	def stackOverFlowSearch_(self):
+		"""
+			this function is connected to 'stackOverflowAction'
+			this function opens a input dialog box in you can 
+			write relevnt keywords to dearch on stackoverflow 
+		"""
+
 		searchString, true = QtGui.QInputDialog.getText(self, 'stackOverflow.com', 'Enter query')
 		if true:
 			webbrowser.open("http://stackoverflow.com/search?q={}".format(searchString))
 		else:
 			pass
 	def gitHubSearch_(self):
+		"""
+			this function is connected to 'gitHubAction'
+			this function opens a input dialog box from which you 
+			can seach anything on github 
+		"""
+
 		searchString, true = QtGui.QInputDialog.getText(self, 'github.com', 'Enter query')
 		if true:
 			webbrowser.open("https://github.com/search?utf8=✓&q={}".format(searchString))

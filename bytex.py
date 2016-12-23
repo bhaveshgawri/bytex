@@ -5,7 +5,7 @@ from markdown_editor import web_edit
 class Editor(QtGui.QMainWindow):
 	def __init__(self):
 		super(Editor, self).__init__()
-		#print (help(Editor))
+		#print (help(lexers))
 		self.setGeometry(0,0, 600, 800)
 		self.setMinimumSize(600,350)
 		self.setWindowTitle("bytex")		
@@ -170,7 +170,6 @@ class Editor(QtGui.QMainWindow):
 
 #------------------//File Menu Actions//-----------------#
 
-		
 		statusBar = self.statusBar()
 
 #---------------------Menu Bar Creation-------------------#
@@ -234,7 +233,10 @@ class Editor(QtGui.QMainWindow):
 
 		self.fileList = []
 
-#-------------------Function Declarations-----------------#
+#					Function Declarations
+
+
+#----------------------MISC. Functions--------------------#
 	
 	def view_(self, insertAction, readOnlyAction, autoIndentAction):
 		#these args are supplied for the sake of function 'newAndOpenFuncs_' 
@@ -319,6 +321,8 @@ class Editor(QtGui.QMainWindow):
 		"""
 			this funciton sets the width of the numbers margin
 			in all the tabs
+			connected with 'cursorPositionChanged' signal and 
+			gets called when cursor position changes
 		"""
 		text__edit = self.tabWidget.currentWidget()
 
@@ -364,11 +368,118 @@ class Editor(QtGui.QMainWindow):
 			new tab so that previously active properties may 
 			apply to those tabs also 
 		"""
+		#some default values
 		self.setDefaultFont_(textEdit)
 		self.setMarginNumbers_()
 		self.insert_(insertAction)
 		self.readOnly_(readOnlyAction)
-		self.setAutoIndent_(autoIndentAction) 
+		self.setAutoIndent_(autoIndentAction)
+		self.textEdit.setIndentationGuides(True)
+		self.textEdit.setCaretLineVisible(True)
+		self.textEdit.setFolding(Qsci.QsciScintilla.BoxedTreeFoldStyle, 2)
+		self.textEdit.setBraceMatching(Qsci.QsciScintilla.SloppyBraceMatch)
+		
+		
+		#color properties
+		self.textEdit.setMarginsForegroundColor(QtGui.QColor("black"))
+		self.textEdit.setMarginsBackgroundColor(QtGui.QColor("#dddddd"))
+
+		self.textEdit.setPaper(QtGui.QColor("white"))
+		#self.textEdit.setColor(QtGui.QColor())
+
+		#self.textEdit.setIndentationGuidesBackgroundColor()
+		#self.textEdit.setIndentationGuidesForegroundcolor()
+
+		self.textEdit.setCaretLineBackgroundColor(QtGui.QColor("#eeeeee"))
+		self.textEdit.setFoldMarginColors(QtGui.QColor("#eeeeee"),QtGui.QColor("#eeeeee"))
+
+		self.textEdit.setMatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
+		self.textEdit.setMatchedBraceForegroundColor(QtGui.QColor("orange"))
+		self.textEdit.setUnmatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
+		self.textEdit.setUnmatchedBraceForegroundColor(QtGui.QColor("black"))
+
+		#auto completion
+		self.textEdit.setAutoCompletionSource(Qsci.QsciScintilla.AcsDocument)
+		self.textEdit.setAutoCompletionThreshold(2)
+		self.textEdit.setAutoCompletionReplaceWord(True)
+		self.textEdit.setAutoCompletionFillupsEnabled(True)
+		self.textEdit.setAutoCompletionCaseSensitivity(True)
+
+#--------------------//MISC. Functions//-------------------#
+
+#--------------------lexers and lexfuncs-------------------#
+
+	def callLexers_(self, textEdit):
+		#calling lexers of different languages
+		self.pyLexer_(textEdit)
+		self.cLexer_(textEdit)
+		self.javaLexer_(textEdit)
+		self.jsLexer_(textEdit)
+		self.htmlLexer_(textEdit)
+		self.cssLexer_(textEdit)
+		self.xmlLexer_(textEdit)
+
+	def lex_ex_(self, ex):
+		"""
+			returns true if extension of current tab
+			is equal to ex
+			else returns false
+		"""
+		if self.tabWidget.tabText(self.tabWidget.currentIndex()).endswith("."+ex):
+			return True
+		else:
+			return False
+
+	#python lexer
+	def pyLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerPython()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if  self.lex_ex_("py") or self.lex_ex_("py3"):
+			text_edit.setLexer(lexer)
+
+	#c and cpp lexer
+	def cLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerCPP()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if self.lex_ex_("c") or self.lex_ex_("cpp") or self.lex_ex_("h"):
+			text_edit.setLexer(lexer)
+
+	#java lexer
+	def javaLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerJava()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if self.lex_ex_("java"):
+			text_edit.setLexer(lexer)
+
+	#javaScript lexer
+	def jsLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerJavaScript()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if self.lex_ex_("js"):
+			text_edit.setLexer(lexer)
+
+	#html lexer
+	def htmlLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerJavaScript()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if self.lex_ex_("htm") or self.lex_ex_("html"):
+			text_edit.setLexer(lexer)
+
+	#css lexer
+	def cssLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerJavaScript()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if self.lex_ex_("css"):
+			text_edit.setLexer(lexer)
+
+	#xml lexer
+	def xmlLexer_(self, text_edit):
+		lexer = Qsci.QsciLexerJavaScript()
+		lexer.setFont(QtGui.QFont("Calibri", 13))
+		if self.lex_ex_("xml"):
+			text_edit.setLexer(lexer)
+
+#-----------------//lexers and lexfuncs//-----------------#
 
 #--------------------File Menu Functions------------------#	
 	
@@ -377,10 +488,11 @@ class Editor(QtGui.QMainWindow):
 			this function is connected to 'newTabAction'
 		"""
 
-		#adds a new tab
+		#adds a new tab and set it to current tab
 		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
 		self.tabWidget.addTab(self.textEdit, "Untitled " + str(self.tabWidget.count()+1))
-		
+		self.tabWidget.setCurrentWidget	(self.textEdit)
+
 		#to apply prev. active props to newly opened tabs
 		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
 
@@ -394,12 +506,16 @@ class Editor(QtGui.QMainWindow):
 		oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
 		file = open(oldFileName, 'r')
 		
-		#add a new tab to editor
+		#add a new tab to editor and set it to current tab
 		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
 		self.tabWidget.addTab(self.textEdit, os.path.basename(oldFileName))
-		
+		self.tabWidget.setCurrentWidget	(self.textEdit)
+
 		#append path of this file to a list
 		self.fileList.append(oldFileName)
+
+		#calling lexers ion current tab
+		self.callLexers_(self.textEdit)
 
 		#read the data from file and set it to editor and close the file
 		data = file.read();
@@ -448,7 +564,11 @@ class Editor(QtGui.QMainWindow):
 		
 		#append path of this file to a list
 		self.fileList.append(newFileName)	
-
+		
+		#calling lexers on current tab
+		text_edit = self.tabWidget.currentWidget()
+		self.callLexers_(self.text_edit)
+		
 		#get the data from editor and write it to file and close the file
 		data = self.tabWidget.currentWidget().text()
 		file.write(data)

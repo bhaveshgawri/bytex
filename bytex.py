@@ -75,7 +75,9 @@ class Editor(QtGui.QMainWindow):
 		action8 = tab_action_group.addAction(QtGui.QAction("Tab Width:8", self, checkable=True))
 		action12 = tab_action_group.addAction(QtGui.QAction("Tab Width:12", self, checkable=True))
 		action16 = tab_action_group.addAction(QtGui.QAction("Tab Width:16", self, checkable=True))
-		tab_action_group.triggered.connect(lambda: self.setTabWidth_(tab_action_group, action2, action4, action8, action12, action16))
+		tab_action_group.triggered.connect(lambda: self.setTabWidth_(tab_action_group, action2,
+			action4, action8, action12, action16
+			))
 
 		autoIndentAction = QtGui.QAction("Auto Indent", self, checkable = True)
 		autoIndentAction.setChecked(True)
@@ -115,10 +117,22 @@ class Editor(QtGui.QMainWindow):
 
 #-------------------//Tool Menu Actions//-----------------#	
 
-#-----------------Misc. Actions and Signals---------------#
+#----------------------bytex Actions----------------------#
 		
-		self.tabWidget.currentChanged.connect(self.nameOfWindow_)
+		helpAction = QtGui.QAction("Help?",self)
+		helpAction.triggered.connect(self.help_)
 
+		contributeAction = QtGui.QAction("Contribute!",self)
+		contributeAction.setStatusTip("Make bytex better.")
+		contributeAction.triggered.connect(self.contribute_)
+
+#--------------------//bytex Actions//--------------------#	
+
+#-----------------Misc. Actions and Signals---------------#
+			
+	
+		self.tabWidget.currentChanged.connect(self.nameOfWindow_)
+		
 		nextTabAction = QtGui.QAction(self)
 		nextTabAction.setShortcut("Ctrl+t")
 		nextTabAction.triggered.connect(self.nextTab_)
@@ -134,7 +148,14 @@ class Editor(QtGui.QMainWindow):
 		newTabAction = QtGui.QAction("New File",self)
 		newTabAction.setShortcut("Ctrl+e")
 		newTabAction.setStatusTip("Create a new Document")
-		newTabAction.triggered.connect(lambda: self.newFile_(insertAction, readOnlyAction, autoIndentAction))
+		newTabAction.triggered.connect(lambda: self.newFile_(insertAction, readOnlyAction,
+			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16
+			))
+
+		XTerminalAction = QtGui.QAction("New xTab", self)
+		XTerminalAction.setShortcut("shift+alt+x")
+		XTerminalAction.setToolTip("Open xTerm in a new tab.")
+		XTerminalAction.triggered.connect(self.xTab_)
 
 		newWinAction = QtGui.QAction("New Window",self)
 		newWinAction.setShortcut("Ctrl+n")
@@ -144,7 +165,9 @@ class Editor(QtGui.QMainWindow):
 		openAction = QtGui.QAction("Open",self)
 		openAction.setShortcut("Ctrl+o")
 		openAction.setStatusTip("Open an existing document")
-		openAction.triggered.connect(lambda: self.open_(insertAction, readOnlyAction, autoIndentAction))
+		openAction.triggered.connect(lambda: self.open_(insertAction, readOnlyAction, 
+			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16
+			))
 		
 		saveAction = QtGui.QAction("Save",self)
 		saveAction.setShortcut("Ctrl+s")
@@ -179,8 +202,10 @@ class Editor(QtGui.QMainWindow):
 		edit = bar.addMenu("Edit")
 		format_ = bar.addMenu("Format")
 		tools = bar.addMenu("Tools") 
+		bytex = bar.addMenu("bytex")
 
 		file.addAction(newTabAction)
+		file.addAction(XTerminalAction)
 		file.addSeparator()
 		file.addAction(openAction)
 		file.addSeparator()
@@ -227,22 +252,31 @@ class Editor(QtGui.QMainWindow):
 		tools.addAction(stackOverflowAction)
 		tools.addAction(gitHubAction)
 
+		bytex.addAction(helpAction)
+		bytex.addAction(contributeAction)
+
 #-------------------//Menu Bar Creation//-----------------#
 		
-		self.view_(insertAction, readOnlyAction, autoIndentAction)
-
+		self.view_(insertAction, readOnlyAction, autoIndentAction,
+			tab_action_group, action2, action4, action8, action12, action16
+			)
+		
 		self.fileList = []
 
-#					Function Declarations
+#===================Function Declarations=================#
 
 
 #----------------------MISC. Functions--------------------#
 	
-	def view_(self, insertAction, readOnlyAction, autoIndentAction):
+	def view_(self, insertAction, readOnlyAction, autoIndentAction
+		,tab_action_group, action2, action4, action8, action12, action16
+		):
 		#these args are supplied for the sake of function 'newAndOpenFuncs_' 
 		
 		#to createt a new file as soon as the editor is opened
-		self.newFile_(insertAction, readOnlyAction, autoIndentAction)
+		self.newFile_(insertAction, readOnlyAction, autoIndentAction,
+			tab_action_group, action2, action4, action8, action12, action16
+			)
 		
 		#to show the editor on the screen
 		self.show()
@@ -251,22 +285,18 @@ class Editor(QtGui.QMainWindow):
 		"""
 			called from the 'currentChanged' signal
 			works when the current tab changes
-
 		"""
-
+		
 		#sets the name of the currnt file as title of the window
 		self.tab_name = self.tabWidget.tabText(self.tabWidget.currentIndex())
 		self.setWindowTitle(self.tab_name + " - bytex")
-
-		#changing the width of margin where numbersa are displayed
-		text__edit = self.tabWidget.currentWidget()
-		if self.tabWidget.count() > 0:
-			text__edit.cursorPositionChanged.connect(self.marginWidth_)
-
-			self.marginWidth_()
-			#causes some errors which does not affect the functioning
-			#if removed margin size will not automatically dec/inc immediately
-			#after the tab change 
+		
+		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
+			#changing the width of margin where numbersa are displayed
+			text__edit = self.tabWidget.currentWidget()
+			if self.tabWidget.count() > 0:
+				text__edit.cursorPositionChanged.connect(self.marginWidth_)
+				self.marginWidth_()
 
 		#closes the editor if number of tabs is zero
 		if self.tabWidget.count() is 0:
@@ -301,12 +331,12 @@ class Editor(QtGui.QMainWindow):
 			for the current tab and number margin 
 		"""
 		try:
-			self.font = QtGui.QFont("Ubuntu", 14)
+			font = QtGui.QFont("Calibri", 14)
 		except:
-			self.font = QtGui.QFont("Sans Serif", 14)
+			font = QtGui.QFont("Sans Serif", 14)
 		
-		textEdit.setFont(self.font)
-		textEdit.setMarginsFont(self.font)
+		textEdit.setFont(font)
+		textEdit.setMarginsFont(font)
 
 	def cursorPosition_(self):
 		"""
@@ -314,8 +344,8 @@ class Editor(QtGui.QMainWindow):
 			of the cursor
 		"""
 		text__edit = self.tabWidget.currentWidget()
-		self.line_, self.index_ = text__edit.getCursorPosition()
-		return self.line_, self.index_
+		line_, index_ = text__edit.getCursorPosition()
+		return line_, index_
 	
 	def marginWidth_(self):
 		"""
@@ -325,25 +355,29 @@ class Editor(QtGui.QMainWindow):
 			gets called when cursor position changes
 		"""
 		text__edit = self.tabWidget.currentWidget()
-
+		try:
+			font = QtGui.QFont("Calibri", 14)
+		except:
+			font = QtGui.QFont("Sans Serif", 14)
 		#l is the number of lines in the current tab
 		l = text__edit.lines()
 		if l < 10:
-			margin = QtGui.QFontMetrics(self.font).width("0")
+			margin = QtGui.QFontMetrics(font).width("0")
 		elif l < 100:
-			margin = QtGui.QFontMetrics(self.font).width("00")
+			margin = QtGui.QFontMetrics(font).width("00")
 		elif l < 1000:
-			margin = QtGui.QFontMetrics(self.font).width("000")
+			margin = QtGui.QFontMetrics(font).width("000")
 		elif l < 10000:
-			margin = QtGui.QFontMetrics(self.font).width("0000")
+			margin = QtGui.QFontMetrics(font).width("0000")
 		elif l < 100000:
-			margin = QtGui.QFontMetrics(self.font).width("00000")
+			margin = QtGui.QFontMetrics(font).width("00000")
 		else:
-			margin = QtGui.QFontMetrics(self.font).width("000000000")
+			margin = QtGui.QFontMetrics(font).width("000000000")
 		
 		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 		for text_edit in text_edit_s:
-   			text_edit.setMarginWidth(1, margin + 5)				
+			if type(text_edit) == Qsci.QsciScintilla:
+				text_edit.setMarginWidth(1, margin + 10)
 
 		#PROBLEM in this function BUT the output is correct
 		#print(_line, _index) #after commenting the return statement
@@ -360,50 +394,55 @@ class Editor(QtGui.QMainWindow):
 		"""
 		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 		for text_edit in text_edit_s:
-			text_edit.setMarginLineNumbers(1, True)
+			if type(text_edit) == Qsci.QsciScintilla:
+				text_edit.setMarginLineNumbers(1, True)
 
-	def newAndOpenFuncs_(self, textEdit, insertAction, readOnlyAction, autoIndentAction):
+	def newAndOpenFuncs_(self, textEdit, insertAction, readOnlyAction, autoIndentAction,
+		tab_action_group, action2, action4, action8, action12, action16
+		):
 		"""
 			these funcs are to be called every time for each
 			new tab so that previously active properties may 
 			apply to those tabs also 
 		"""
 		#some default values
+		textEdit.setUtf8(True)
 		self.setDefaultFont_(textEdit)
 		self.setMarginNumbers_()
 		self.insert_(insertAction)
 		self.readOnly_(readOnlyAction)
+		self.setTabWidth_(tab_action_group, action2, action4, action8, action12, action16)
 		self.setAutoIndent_(autoIndentAction)
-		self.textEdit.setIndentationGuides(True)
-		self.textEdit.setCaretLineVisible(True)
-		self.textEdit.setFolding(Qsci.QsciScintilla.BoxedTreeFoldStyle, 2)
-		self.textEdit.setBraceMatching(Qsci.QsciScintilla.SloppyBraceMatch)
+		textEdit.setIndentationGuides(True)
+		textEdit.setCaretLineVisible(True)
+		textEdit.setFolding(Qsci.QsciScintilla.BoxedTreeFoldStyle, 2)
+		textEdit.setBraceMatching(Qsci.QsciScintilla.SloppyBraceMatch)
 		
 		
 		#color properties
-		self.textEdit.setMarginsForegroundColor(QtGui.QColor("black"))
-		self.textEdit.setMarginsBackgroundColor(QtGui.QColor("#dddddd"))
+		textEdit.setMarginsForegroundColor(QtGui.QColor("black"))
+		textEdit.setMarginsBackgroundColor(QtGui.QColor("#dddddd"))
 
-		self.textEdit.setPaper(QtGui.QColor("white"))
-		#self.textEdit.setColor(QtGui.QColor())
+		textEdit.setPaper(QtGui.QColor("white"))
+		#textEdit.setColor(QtGui.QColor())
 
-		#self.textEdit.setIndentationGuidesBackgroundColor()
-		#self.textEdit.setIndentationGuidesForegroundcolor()
+		#textEdit.setIndentationGuidesBackgroundColor()
+		#textEdit.setIndentationGuidesForegroundcolor()
 
-		self.textEdit.setCaretLineBackgroundColor(QtGui.QColor("#eeeeee"))
-		self.textEdit.setFoldMarginColors(QtGui.QColor("#eeeeee"),QtGui.QColor("#eeeeee"))
+		textEdit.setCaretLineBackgroundColor(QtGui.QColor("#eeeeee"))
+		textEdit.setFoldMarginColors(QtGui.QColor("#eeeeee"),QtGui.QColor("#eeeeee"))
 
-		self.textEdit.setMatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
-		self.textEdit.setMatchedBraceForegroundColor(QtGui.QColor("orange"))
-		self.textEdit.setUnmatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
-		self.textEdit.setUnmatchedBraceForegroundColor(QtGui.QColor("black"))
+		textEdit.setMatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
+		textEdit.setMatchedBraceForegroundColor(QtGui.QColor("orange"))
+		textEdit.setUnmatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
+		textEdit.setUnmatchedBraceForegroundColor(QtGui.QColor("black"))
 
 		#auto completion
-		self.textEdit.setAutoCompletionSource(Qsci.QsciScintilla.AcsDocument)
-		self.textEdit.setAutoCompletionThreshold(2)
-		self.textEdit.setAutoCompletionReplaceWord(True)
-		self.textEdit.setAutoCompletionFillupsEnabled(True)
-		self.textEdit.setAutoCompletionCaseSensitivity(True)
+		textEdit.setAutoCompletionSource(Qsci.QsciScintilla.AcsDocument)
+		textEdit.setAutoCompletionThreshold(2)
+		textEdit.setAutoCompletionReplaceWord(True)
+		textEdit.setAutoCompletionFillupsEnabled(True)
+		textEdit.setAutoCompletionCaseSensitivity(True)
 
 #--------------------//MISC. Functions//-------------------#
 
@@ -483,47 +522,68 @@ class Editor(QtGui.QMainWindow):
 
 #--------------------File Menu Functions------------------#	
 	
-	def newFile_(self, insertAction, readOnlyAction, autoIndentAction):
+	def xTab_(self):
+		process  = QtCore.QProcess(self.tabWidget)
+		self.xterm = QtGui.QWidget(self.tabWidget)
+		self.tabWidget.addTab(self.xterm, "xTerm")
+		self.tabWidget.setCurrentWidget(self.xterm)
+		process.start('xterm',['-into', str(self.tabWidget.currentWidget().winId())])
+
+	def newFile_(self, insertAction, readOnlyAction, autoIndentAction
+		,tab_action_group, action2, action4, action8, action12, action16
+		):
 		"""
 			this function is connected to 'newTabAction'
 		"""
 
 		#adds a new tab and set it to current tab
-		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
-		self.tabWidget.addTab(self.textEdit, "Untitled " + str(self.tabWidget.count()+1))
-		self.tabWidget.setCurrentWidget	(self.textEdit)
+		textEdit = Qsci.QsciScintilla(self.tabWidget)
+		self.tabWidget.addTab(textEdit, "Untitled " + str(self.tabWidget.count()+1))
+		self.tabWidget.setCurrentWidget	(textEdit)
 
 		#to apply prev. active props to newly opened tabs
-		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
+		self.newAndOpenFuncs_(textEdit, insertAction, readOnlyAction, autoIndentAction
+			,tab_action_group, action2, action4, action8, action12, action16
+			)
 
 
-	def open_(self, insertAction, readOnlyAction, autoIndentAction):
+	def open_(self, insertAction, readOnlyAction, autoIndentAction
+		,tab_action_group, action2, action4, action8, action12, action16
+		):
 		"""
 			this function is connnected to 'openAction'
 		"""
 
-		#open a file from local storage
-		oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
-		file = open(oldFileName, 'r')
-		
-		#add a new tab to editor and set it to current tab
-		self.textEdit = Qsci.QsciScintilla(self.tabWidget)
-		self.tabWidget.addTab(self.textEdit, os.path.basename(oldFileName))
-		self.tabWidget.setCurrentWidget	(self.textEdit)
+		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
+			
+			try:
+				#open a file from local storage
+				oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
+				file = open(oldFileName, 'r')
+			except:
+				print("Err... FileNotFoundError.")
+				return
 
-		#append path of this file to a list
-		self.fileList.append(oldFileName)
+			#add a new tab to editor and set it to current tab
+			textEdit = Qsci.QsciScintilla(self.tabWidget)
+			self.tabWidget.addTab(textEdit, os.path.basename(oldFileName))
+			self.tabWidget.setCurrentWidget	(textEdit)
 
-		#calling lexers ion current tab
-		self.callLexers_(self.textEdit)
+			#append path of this file to a list
+			self.fileList.append(oldFileName)
 
-		#read the data from file and set it to editor and close the file
-		data = file.read();
-		self.textEdit.setText(data)
-		file.close()
+			#calling lexers ion current tab
+			self.callLexers_(textEdit)
 
-		#to apply prev. active props to newly opened tabs
-		self.newAndOpenFuncs_(self.textEdit, insertAction, readOnlyAction, autoIndentAction)
+			#read the data from file and set it to editor and close the file
+			data = file.read();
+			textEdit.setText(data)
+			file.close()
+
+			#to apply prev. active props to newly opened tabs
+			self.newAndOpenFuncs_(textEdit, insertAction, readOnlyAction, autoIndentAction
+				,tab_action_group, action2, action4, action8, action12, action16
+				)
 
 	def save_(self):
 		"""
@@ -555,25 +615,31 @@ class Editor(QtGui.QMainWindow):
 			this funciton is connected to 'saveAsAction'
 		"""
 
-		#open a file from local storage
-		newFileName = QtGui.QFileDialog.getSaveFileName(self, "Save File")
-		file = open(newFileName, 'w')
-		
-		self.tabWidget.setTabText(self.tabWidget.currentIndex(), os.path.basename(newFileName))
-		self.setWindowTitle(newFileName + " - bytex")
-		
-		#append path of this file to a list
-		self.fileList.append(newFileName)	
-		
-		#calling lexers on current tab
-		text_edit = self.tabWidget.currentWidget()
-		self.callLexers_(self.text_edit)
-		
-		#get the data from editor and write it to file and close the file
-		data = self.tabWidget.currentWidget().text()
-		file.write(data)
-		file.close()
-	
+		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
+			
+			try:
+				#open a file from local storage
+				newFileName = QtGui.QFileDialog.getSaveFileName(self, "Save File")
+				file = open(newFileName, 'w')
+			except:
+				print("Err... FileNotFoundError.")
+				return
+
+			self.tabWidget.setTabText(self.tabWidget.currentIndex(), os.path.basename(newFileName))
+			self.setWindowTitle(newFileName + " - bytex")
+			
+			#append path of this file to a list
+			self.fileList.append(newFileName)	
+			
+			#get the data from editor and write it to file and close the file
+			data = self.tabWidget.currentWidget().text()
+			file.write(data)
+			file.close()
+			
+			#calling lexers on current tab
+			text_edit = self.tabWidget.currentWidget()
+			self.callLexers_(text_edit)
+
 	def newWindow_(self):
 		"""
 			this function is connected to 'newWinAction'
@@ -611,8 +677,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#undo the current change
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.undo()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:	
+			text_edit.undo()
 
 	def redo_(self):
 		"""
@@ -620,8 +687,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#redo the last change
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.redo()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:
+			text_edit.redo()
 	
 	def cut_(self):
 		"""
@@ -629,8 +697,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#cut the selected text from the current tab
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.cut()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:
+			text_edit.cut()
 	
 	def copy_(self):
 		"""
@@ -638,8 +707,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#copy the selected text from the current tab
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.copy()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:
+			text_edit.copy()
 	
 	def paste_(self):
 		"""
@@ -647,8 +717,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#paste the selected text from the current tab
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.paste()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:
+			text_edit.paste()
 	
 	def readOnly_(self, readOnlyAction):
 		"""
@@ -659,12 +730,14 @@ class Editor(QtGui.QMainWindow):
 		if readOnlyAction.isChecked() is True:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:	
-				text_edit.setReadOnly(True)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setReadOnly(True)
 		#undo the readOnly action
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setReadOnly(False)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setReadOnly(False)
 	
 	def selectAll_(self):
 		"""
@@ -672,8 +745,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#select all the text from the current tab
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.selectAll()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:
+			text_edit.selectAll()
 	
 	def clear_(self):
 		"""
@@ -681,8 +755,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		
 		#clear all the text from the current tab
-		self.text_edit = self.tabWidget.currentWidget()
-		self.text_edit.clear()
+		text_edit = self.tabWidget.currentWidget()
+		if type(text_edit) == Qsci.QsciScintilla:
+			text_edit.clear()
 	
 	def insert_(self, insertAction):
 		"""
@@ -693,12 +768,14 @@ class Editor(QtGui.QMainWindow):
 		if insertAction.isChecked() is True:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-   				text_edit.setOverwriteMode(True)
+   				if type(text_edit) == Qsci.QsciScintilla:	
+   					text_edit.setOverwriteMode(True)
 		#disable the insert mode in all tabs
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-   				text_edit.setOverwriteMode(False)
+   				if type(text_edit) == Qsci.QsciScintilla:
+   					text_edit.setOverwriteMode(False)
 
 #------------------//Edit Menu Functions//----------------#
 
@@ -712,10 +789,10 @@ class Editor(QtGui.QMainWindow):
 		#opens a dialog to choose font, font-style and font-size from
 		font, true = QtGui.QFontDialog.getFont()
 		if true:
-			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
-			for text_edit in text_edit_s:
+			text_edit = self.tabWidget.currentWidget()
+			if type(text_edit) == Qsci.QsciScintilla:
 				text_edit.setFont(font)
-	
+
 	def setTabWidth_(self,tab_action_group, action2, action4, action8, action12, action16):
 		"""
 			this function is connected to 'tab_action_group'
@@ -725,28 +802,33 @@ class Editor(QtGui.QMainWindow):
 		if tab_action_group.checkedAction() is action2:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setTabWidth(2)
-				text_edit.setIndentationWidth(2)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setTabWidth(2)
+					text_edit.setIndentationWidth(2)
 		elif tab_action_group.checkedAction() is action4:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setTabWidth(4)
-				text_edit.setIndentationWidth(4)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setTabWidth(4)
+					text_edit.setIndentationWidth(4)
 		elif tab_action_group.checkedAction() is action8:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setTabWidth(8)
-				text_edit.setIndentationWidth(8)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setTabWidth(8)
+					text_edit.setIndentationWidth(8)
 		elif tab_action_group.checkedAction() is action12:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setTabWidth(12)
-				text_edit.setIndentationWidth(12)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setTabWidth(12)
+					text_edit.setIndentationWidth(12)
 		elif tab_action_group.checkedAction() is action16:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setTabWidth(16)
-				text_edit.setIndentationWidth(16)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setTabWidth(16)
+					text_edit.setIndentationWidth(16)
 	
 	def setAutoIndent_(self, autoIndentAction):
 		"""
@@ -757,12 +839,14 @@ class Editor(QtGui.QMainWindow):
 		if autoIndentAction.isChecked() is True:
 				text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 				for text_edit in text_edit_s:
-					text_edit.setAutoIndent(True)
+					if type(text_edit) == Qsci.QsciScintilla:
+						text_edit.setAutoIndent(False)
 		#disables the auto indentation
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-				text_edit.setAutoIndent(False)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setAutoIndent(False)
 
 #-----------------//Format Menu Functions//---------------#	
 		
@@ -782,7 +866,10 @@ class Editor(QtGui.QMainWindow):
 		#if file name exists in the path list, open bash in the path
 		for path_ in self.fileList:
 			if self.tabName == os.path.basename(path_):
-				os.system("gnome-terminal -e 'bash -c \"cd {}; exec bash\"'".format(path_[0:len(path_)-len(os.path.basename(path_))]))
+				os.system("gnome-terminal -e 'bash -c \"cd {}; exec bash\"'".format(
+					path_[0:len(path_)-len(os.path.basename(path_))]
+					))
+				
 				flag=1
 				break
 		#else in the home directory
@@ -832,6 +919,7 @@ class Editor(QtGui.QMainWindow):
 			webbrowser.open("http://stackoverflow.com/search?q={}".format(searchString))
 		else:
 			pass
+	
 	def gitHubSearch_(self):
 		"""
 			this function is connected to 'gitHubAction'
@@ -845,6 +933,16 @@ class Editor(QtGui.QMainWindow):
 		else:
 			pass
 #------------------//Tool Menu Functions//----------------#
+
+#----------------------bytex Functions--------------------#
+	
+	def help_(self):
+		webbrowser.open("https://github.com/bhaveshgawri/bytex")
+	
+	def contribute_(self):
+		webbrowser.open("https://github.com/bhaveshgawri/bytex")
+
+#--------------------//bytex Functions//------------------#
 
 def run():
 	app = QtGui.QApplication(sys.argv)

@@ -6,9 +6,10 @@ class Editor(QtGui.QMainWindow):
 	def __init__(self):
 		super(Editor, self).__init__()
 		#print (help(lexers))
-		self.setGeometry(0,0, 600, 800)
+		self.setGeometry(0,0, 800, 1000)
 		self.setMinimumSize(600,350)
 		self.setWindowTitle("bytex")		
+		self.setWindowIcon(QtGui.QIcon("./icon.jpg"))
 		
 		self.tabWidget = QtGui.QTabWidget(self)
 		self.setCentralWidget(self.tabWidget)
@@ -84,6 +85,11 @@ class Editor(QtGui.QMainWindow):
 		autoIndentAction.setStatusTip("Toggle Auto Indentation")
 		autoIndentAction.triggered.connect(lambda: self.setAutoIndent_(autoIndentAction))
 
+		darkModeAction = QtGui.QAction("Dark Mode", self, checkable = True)
+		darkModeAction.setStatusTip("Toggle Dark Mode")
+		darkModeAction.setChecked(True)
+		darkModeAction.triggered.connect(lambda: self.darkMode_(darkModeAction))
+
 #------------------//Format Menu Actions//----------------#
 
 #---------------------Tool Menu Actions-------------------#
@@ -149,7 +155,8 @@ class Editor(QtGui.QMainWindow):
 		newTabAction.setShortcut("Ctrl+e")
 		newTabAction.setStatusTip("Create a new Document")
 		newTabAction.triggered.connect(lambda: self.newFile_(insertAction, readOnlyAction,
-			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16
+			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16,
+			darkModeAction
 			))
 
 		XTerminalAction = QtGui.QAction("New xTab", self)
@@ -166,18 +173,19 @@ class Editor(QtGui.QMainWindow):
 		openAction.setShortcut("Ctrl+o")
 		openAction.setStatusTip("Open an existing document")
 		openAction.triggered.connect(lambda: self.open_(insertAction, readOnlyAction, 
-			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16
+			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16,
+			darkModeAction
 			))
 		
 		saveAction = QtGui.QAction("Save",self)
 		saveAction.setShortcut("Ctrl+s")
 		saveAction.setStatusTip("Save this document")
-		saveAction.triggered.connect(self.save_)
+		saveAction.triggered.connect(lambda: self.save_(darkModeAction))
 		
 		saveAsAction = QtGui.QAction("Save As...",self)
 		saveAsAction.setShortcut("Ctrl+Shift+s")
 		saveAsAction.setStatusTip("Save this document as...")
-		saveAsAction.triggered.connect(self.saveAs_)
+		saveAsAction.triggered.connect(lambda: self.saveAs_(darkModeAction))
 		
 		closeAction = QtGui.QAction("Close",self)
 		closeAction.setShortcut("Ctrl+w")
@@ -241,6 +249,8 @@ class Editor(QtGui.QMainWindow):
 		tabWidth.addAction(action16)
 		format_.addSeparator()
 		format_.addAction(autoIndentAction)
+		format_.addSeparator()
+		format_.addAction(darkModeAction)
 
 		tools.addAction(terminalAction)
 		tools.addSeparator()
@@ -258,7 +268,8 @@ class Editor(QtGui.QMainWindow):
 #-------------------//Menu Bar Creation//-----------------#
 		
 		self.view_(insertAction, readOnlyAction, autoIndentAction,
-			tab_action_group, action2, action4, action8, action12, action16
+			tab_action_group, action2, action4, action8, action12, action16,
+			darkModeAction
 			)
 		
 		self.fileList = []
@@ -269,13 +280,15 @@ class Editor(QtGui.QMainWindow):
 #----------------------MISC. Functions--------------------#
 	
 	def view_(self, insertAction, readOnlyAction, autoIndentAction
-		,tab_action_group, action2, action4, action8, action12, action16
+		,tab_action_group, action2, action4, action8, action12, action16,
+		darkModeAction
 		):
 		#these args are supplied for the sake of function 'newAndOpenFuncs_' 
 		
 		#to createt a new file as soon as the editor is opened
 		self.newFile_(insertAction, readOnlyAction, autoIndentAction,
-			tab_action_group, action2, action4, action8, action12, action16
+			tab_action_group, action2, action4, action8, action12, action16,
+			darkModeAction
 			)
 		
 		#to show the editor on the screen
@@ -331,9 +344,9 @@ class Editor(QtGui.QMainWindow):
 			for the current tab and number margin 
 		"""
 		try:
-			font = QtGui.QFont("Calibri", 14)
+			font = QtGui.QFont("consolas", 14)
 		except:
-			font = QtGui.QFont("Sans Serif", 14)
+			font = QtGui.QFont("consolas", 14)
 		
 		textEdit.setFont(font)
 		textEdit.setMarginsFont(font)
@@ -356,9 +369,9 @@ class Editor(QtGui.QMainWindow):
 		"""
 		text__edit = self.tabWidget.currentWidget()
 		try:
-			font = QtGui.QFont("Calibri", 14)
+			font = QtGui.QFont("consolas", 14)
 		except:
-			font = QtGui.QFont("Sans Serif", 14)
+			font = QtGui.QFont("consolas", 14)
 		#l is the number of lines in the current tab
 		l = text__edit.lines()
 		if l < 10:
@@ -398,7 +411,8 @@ class Editor(QtGui.QMainWindow):
 				text_edit.setMarginLineNumbers(1, True)
 
 	def newAndOpenFuncs_(self, textEdit, insertAction, readOnlyAction, autoIndentAction,
-		tab_action_group, action2, action4, action8, action12, action16
+		tab_action_group, action2, action4, action8, action12, action16,
+		darkModeAction
 		):
 		"""
 			these funcs are to be called every time for each
@@ -417,26 +431,8 @@ class Editor(QtGui.QMainWindow):
 		textEdit.setCaretLineVisible(True)
 		textEdit.setFolding(Qsci.QsciScintilla.BoxedTreeFoldStyle, 2)
 		textEdit.setBraceMatching(Qsci.QsciScintilla.SloppyBraceMatch)
+		self.genColorProps_(textEdit, darkModeAction)
 		
-		
-		#color properties
-		textEdit.setMarginsForegroundColor(QtGui.QColor("black"))
-		textEdit.setMarginsBackgroundColor(QtGui.QColor("#dddddd"))
-
-		textEdit.setPaper(QtGui.QColor("white"))
-		#textEdit.setColor(QtGui.QColor())
-
-		#textEdit.setIndentationGuidesBackgroundColor()
-		#textEdit.setIndentationGuidesForegroundcolor()
-
-		textEdit.setCaretLineBackgroundColor(QtGui.QColor("#eeeeee"))
-		textEdit.setFoldMarginColors(QtGui.QColor("#eeeeee"),QtGui.QColor("#eeeeee"))
-
-		textEdit.setMatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
-		textEdit.setMatchedBraceForegroundColor(QtGui.QColor("orange"))
-		textEdit.setUnmatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
-		textEdit.setUnmatchedBraceForegroundColor(QtGui.QColor("black"))
-
 		#auto completion
 		textEdit.setAutoCompletionSource(Qsci.QsciScintilla.AcsDocument)
 		textEdit.setAutoCompletionThreshold(2)
@@ -448,74 +444,231 @@ class Editor(QtGui.QMainWindow):
 
 #--------------------lexers and lexfuncs-------------------#
 
-	def callLexers_(self, textEdit):
-		#calling lexers of different languages
-		self.pyLexer_(textEdit)
-		self.cLexer_(textEdit)
-		self.javaLexer_(textEdit)
-		self.jsLexer_(textEdit)
-		self.htmlLexer_(textEdit)
-		self.cssLexer_(textEdit)
-		self.xmlLexer_(textEdit)
+	def genColorProps_(self, textEdit, darkModeAction):
+		"""
+			This function gives color to different elements
+			of the text editor in :
 
-	def lex_ex_(self, ex):
 		"""
-			returns true if extension of current tab
-			is equal to ex
-			else returns false
+		# the dark mode
+		if darkModeAction.isChecked() is True:
+			textEdit.setMarginsForegroundColor(QtGui.QColor("white"))
+			textEdit.setMarginsBackgroundColor(QtGui.QColor("#333333"))
+
+			textEdit.setPaper(QtGui.QColor("#333333"))
+			textEdit.setColor(QtGui.QColor("white"))
+
+			textEdit.setIndentationGuidesBackgroundColor(QtGui.QColor("#666666"))
+			#textEdit.setIndentationGuidesForegroundcolor()
+
+			textEdit.setCaretLineBackgroundColor(QtGui.QColor("#444444"))
+			textEdit.setFoldMarginColors(QtGui.QColor("#444444"),QtGui.QColor("#444444"))
+
+			textEdit.setMatchedBraceBackgroundColor(QtGui.QColor("#444444"))
+			textEdit.setMatchedBraceForegroundColor(QtGui.QColor("red"))
+			textEdit.setUnmatchedBraceBackgroundColor(QtGui.QColor("#444444"))
+			textEdit.setUnmatchedBraceForegroundColor(QtGui.QColor("white"))
+
+		# in light mode
+		elif darkModeAction.isChecked() is False:
+			textEdit.setMarginsForegroundColor(QtGui.QColor("black"))
+			textEdit.setMarginsBackgroundColor(QtGui.QColor("#dddddd"))
+
+			textEdit.setPaper(QtGui.QColor("white"))
+			textEdit.setColor(QtGui.QColor("black"))
+
+			textEdit.setCaretLineBackgroundColor(QtGui.QColor("#eeeeee"))
+			textEdit.setFoldMarginColors(QtGui.QColor("#eeeeee"),QtGui.QColor("#eeeeee"))
+
+			textEdit.setMatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
+			textEdit.setMatchedBraceForegroundColor(QtGui.QColor("red"))
+			textEdit.setUnmatchedBraceBackgroundColor(QtGui.QColor("#eeeeee"))
+			textEdit.setUnmatchedBraceForegroundColor(QtGui.QColor("black"))
+
+
+	def darkMode_(self, darkModeAction):
 		"""
-		if self.tabWidget.tabText(self.tabWidget.currentIndex()).endswith("."+ex):
+			Activated by darkModeAction
+			responsible for change in colors when 
+			Dark Mode gets checked.
+		"""
+
+		text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+		for text_edit in text_edit_s:
+			if type(text_edit) == Qsci.QsciScintilla:
+				self.callLexers_(text_edit, self.tabWidget.indexOf(text_edit), darkModeAction)
+				self.genColorProps_(text_edit, darkModeAction)
+
+	def callLexers_(self, textEdit, text_edit_index, darkModeAction):
+		#calling lexers of different languages
+		self.pyLexer_(textEdit, text_edit_index, darkModeAction)
+		self.cLexer_(textEdit, text_edit_index, darkModeAction)
+		self.javaLexer_(textEdit, text_edit_index, darkModeAction)
+		self.jsLexer_(textEdit, text_edit_index, darkModeAction)
+		self.htmlLexer_(textEdit, text_edit_index, darkModeAction)
+		self.cssLexer_(textEdit, text_edit_index, darkModeAction)
+		self.xmlLexer_(textEdit, text_edit_index, darkModeAction)
+
+	def lex_ex_(self, text_edit_index, ex):
+		"""
+			returns true if extension of tab
+			with index 'text_edit_index' is equal
+			to ex else returns false
+		"""
+		
+		if self.tabWidget.tabText(text_edit_index).endswith("."+ex):
 			return True
 		else:
 			return False
 
 	#python lexer
-	def pyLexer_(self, text_edit):
+	def pyLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerPython()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if  self.lex_ex_("py") or self.lex_ex_("py3"):
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			lexer.setColor(QtGui.QColor("#000000"), 1)   #comment
+			lexer.setColor(QtGui.QColor("orange"), 2) 	 #number
+			lexer.setColor(QtGui.QColor("#FFFF47"), 3) 	 #  ' '
+			lexer.setColor(QtGui.QColor("#FFFF47"), 4) 	 #  " "
+			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
+			lexer.setColor(QtGui.QColor("#000000"), 6)   #  '''
+			lexer.setColor(QtGui.QColor("#000000"), 7)	 #  """
+			lexer.setColor(QtGui.QColor("#ADFF2F"), 8) 	 #class
+			lexer.setColor(QtGui.QColor("#ADFF2F"), 9) 	 #function
+			lexer.setColor(QtGui.QColor("#C0C0C0"), 10)	 #operator
+			lexer.setColor(QtGui.QColor("white"), 11)	 #identifier
+		
+
+		if self.lex_ex_( text_edit_index,"py") or self.lex_ex_(text_edit_index,"py3"):
 			text_edit.setLexer(lexer)
 
 	#c and cpp lexer
-	def cLexer_(self, text_edit):
+	def cLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerCPP()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if self.lex_ex_("c") or self.lex_ex_("cpp") or self.lex_ex_("h"):
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			lexer.setColor(QtGui.QColor("#000000"), 1)   #comment
+			lexer.setColor(QtGui.QColor("orange"), 4) 	 #number
+			lexer.setColor(QtGui.QColor("#FFFF47"), 6)	 #  " "
+			lexer.setColor(QtGui.QColor("#FFFF47"), 7) 	 #  ' '
+			lexer.setColor(QtGui.QColor("red"), 12)	 #  '.... or "....  
+			lexer.setColor(QtGui.QColor("#FFFF47"), 20)	 #raw string
+			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
+			lexer.setColor(QtGui.QColor("#000000"), 2)   #comment line
+			lexer.setColor(QtGui.QColor("#000000"), 3)	 #comment doc
+			lexer.setColor(QtGui.QColor("#ADFF2F"),19) 	 #global class
+			lexer.setColor(QtGui.QColor("#ADFF2F"), 9) 	 #preprocessor
+			lexer.setColor(QtGui.QColor("#C0C0C0"), 10)	 #operator
+			lexer.setColor(QtGui.QColor("white"), 11)	 #identifier
+			lexer.setColor(QtGui.QColor("purple"), 27)	 #escape seq
+
+		if self.lex_ex_(text_edit_index,"c") or self.lex_ex_(text_edit_index,"cpp") or self.lex_ex_(text_edit_index,"h"):
 			text_edit.setLexer(lexer)
 
 	#java lexer
-	def javaLexer_(self, text_edit):
+	def javaLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerJava()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if self.lex_ex_("java"):
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			lexer.setColor(QtGui.QColor("#000000"), 1)   #comment
+			lexer.setColor(QtGui.QColor("orange"), 4) 	 #number
+			lexer.setColor(QtGui.QColor("#FFFF47"), 6)	 #  " "
+			lexer.setColor(QtGui.QColor("#FFFF47"), 7) 	 #  ' '
+			lexer.setColor(QtGui.QColor("red"), 12)	 #  '.... or "....  
+			lexer.setColor(QtGui.QColor("#FFFF47"), 20)	 #raw string
+			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
+			lexer.setColor(QtGui.QColor("#000000"), 2)   #comment line
+			lexer.setColor(QtGui.QColor("#000000"), 3)	 #comment doc
+			lexer.setColor(QtGui.QColor("#ADFF2F"),19) 	 #global class
+			lexer.setColor(QtGui.QColor("#ADFF2F"), 9) 	 #preprocessor
+			lexer.setColor(QtGui.QColor("#C0C0C0"), 10)	 #operator
+			lexer.setColor(QtGui.QColor("white"), 11)	 #identifier
+			lexer.setColor(QtGui.QColor("purple"), 27)	 #escape seq
+
+		if self.lex_ex_(text_edit_index,"java"):
 			text_edit.setLexer(lexer)
 
 	#javaScript lexer
-	def jsLexer_(self, text_edit):
+	def jsLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerJavaScript()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if self.lex_ex_("js"):
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			lexer.setColor(QtGui.QColor("orange"), 4) 	 #number
+			lexer.setColor(QtGui.QColor("#FFFF47"), 6)	 #  " "
+			lexer.setColor(QtGui.QColor("#FFFF47"), 7) 	 #  ' '
+			lexer.setColor(QtGui.QColor("red"), 12)	 #  '.... or "....  
+			lexer.setColor(QtGui.QColor("#FFFF47"), 20)	 #raw string
+			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
+			lexer.setColor(QtGui.QColor("#000000"), 2)   #comment line
+			lexer.setColor(QtGui.QColor("#000000"), 3)	 #comment doc
+			lexer.setColor(QtGui.QColor("#ADFF2F"),19) 	 #global class
+			lexer.setColor(QtGui.QColor("#ADFF2F"), 9) 	 #preprocessor
+			lexer.setColor(QtGui.QColor("#C0C0C0"), 10)	 #operator
+			lexer.setColor(QtGui.QColor("white"), 11)	 #identifier
+			lexer.setColor(QtGui.QColor("purple"), 27)	 #escape seq
+
+		if self.lex_ex_(text_edit_index,"js"):
 			text_edit.setLexer(lexer)
 
 	#html lexer
-	def htmlLexer_(self, text_edit):
-		lexer = Qsci.QsciLexerJavaScript()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if self.lex_ex_("htm") or self.lex_ex_("html"):
+	def htmlLexer_(self, text_edit, text_edit_index, darkModeAction):
+		lexer = Qsci.QsciLexerHTML()
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			lexer.setColor(QtGui.QColor("white"), 1)				
+			"""
+			visit:
+
+			http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciLexerHTML.html
+			
+			and fill your own values acc. to your choice OR
+			use light mode.
+			"""
+
+		if self.lex_ex_(text_edit_index,"htm") or self.lex_ex_(text_edit_index,"html"):
 			text_edit.setLexer(lexer)
 
 	#css lexer
-	def cssLexer_(self, text_edit):
-		lexer = Qsci.QsciLexerJavaScript()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if self.lex_ex_("css"):
+	def cssLexer_(self, text_edit, text_edit_index, darkModeAction):
+		lexer = Qsci.QsciLexerCSS()
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			"""
+			visit:
+
+			http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciLexerCSS.html
+			
+			and fill your own values acc. to your choice OR
+			use light mode.
+			"""
+
+		if self.lex_ex_(text_edit_index,"css"):
 			text_edit.setLexer(lexer)
 
 	#xml lexer
-	def xmlLexer_(self, text_edit):
-		lexer = Qsci.QsciLexerJavaScript()
-		lexer.setFont(QtGui.QFont("Calibri", 13))
-		if self.lex_ex_("xml"):
+	def xmlLexer_(self, text_edit, text_edit_index, darkModeAction):
+		lexer = Qsci.QsciLexerXML()
+		lexer.setFont(QtGui.QFont("consolas", 13))
+		if darkModeAction.isChecked() is True:
+			lexer.setPaper(QtGui.QColor("#333333"))
+			lexer.setColor(QtGui.QColor("white"), 1)
+			"""
+			visit:
+
+			http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciLexerHTML.html
+			
+			yes enum values types are same as HTML
+			and fill your own values acc. to your choice OR
+			use light mode.
+			"""
+
+		if self.lex_ex_(text_edit_index,"xml"):
 			text_edit.setLexer(lexer)
 
 #-----------------//lexers and lexfuncs//-----------------#
@@ -523,6 +676,13 @@ class Editor(QtGui.QMainWindow):
 #--------------------File Menu Functions------------------#	
 	
 	def xTab_(self):
+		"""
+			Starts XTerm in the tab
+			Press Ctrl + Right Click while hovering
+			on XTerm for more options
+
+		"""
+
 		process  = QtCore.QProcess(self.tabWidget)
 		self.xterm = QtGui.QWidget(self.tabWidget)
 		self.tabWidget.addTab(self.xterm, "xTerm")
@@ -530,7 +690,8 @@ class Editor(QtGui.QMainWindow):
 		process.start('xterm',['-into', str(self.tabWidget.currentWidget().winId())])
 
 	def newFile_(self, insertAction, readOnlyAction, autoIndentAction
-		,tab_action_group, action2, action4, action8, action12, action16
+		,tab_action_group, action2, action4, action8, action12, action16,
+		darkModeAction
 		):
 		"""
 			this function is connected to 'newTabAction'
@@ -543,49 +704,51 @@ class Editor(QtGui.QMainWindow):
 
 		#to apply prev. active props to newly opened tabs
 		self.newAndOpenFuncs_(textEdit, insertAction, readOnlyAction, autoIndentAction
-			,tab_action_group, action2, action4, action8, action12, action16
+			,tab_action_group, action2, action4, action8, action12, action16,
+			darkModeAction
 			)
 
 
 	def open_(self, insertAction, readOnlyAction, autoIndentAction
-		,tab_action_group, action2, action4, action8, action12, action16
+		,tab_action_group, action2, action4, action8, action12, action16,
+		darkModeAction
 		):
 		"""
 			this function is connnected to 'openAction'
 		"""
+		
+		try:
+			#open a file from local storage
+			oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
+			file = open(oldFileName, 'r')
+		except:
+			print("Err... FileNotFoundError.")
+			return
 
-		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
-			
-			try:
-				#open a file from local storage
-				oldFileName = QtGui.QFileDialog.getOpenFileName(self, "Open File")
-				file = open(oldFileName, 'r')
-			except:
-				print("Err... FileNotFoundError.")
-				return
+		#add a new tab to editor and set it to current tab
+		textEdit = Qsci.QsciScintilla(self.tabWidget)
+		self.tabWidget.addTab(textEdit, os.path.basename(oldFileName))
+		self.tabWidget.setCurrentWidget	(textEdit)
 
-			#add a new tab to editor and set it to current tab
-			textEdit = Qsci.QsciScintilla(self.tabWidget)
-			self.tabWidget.addTab(textEdit, os.path.basename(oldFileName))
-			self.tabWidget.setCurrentWidget	(textEdit)
+		#append path of this file to a list
+		self.fileList.append(oldFileName)
 
-			#append path of this file to a list
-			self.fileList.append(oldFileName)
+		#calling lexers ion current tab
+		text_edit_index = self.tabWidget.currentIndex()
+		self.callLexers_(textEdit, text_edit_index, darkModeAction)
 
-			#calling lexers ion current tab
-			self.callLexers_(textEdit)
+		#read the data from file and set it to editor and close the file
+		data = file.read();
+		textEdit.setText(data)
+		file.close()
 
-			#read the data from file and set it to editor and close the file
-			data = file.read();
-			textEdit.setText(data)
-			file.close()
+		#to apply prev. active props to newly opened tabs
+		self.newAndOpenFuncs_(textEdit, insertAction, readOnlyAction, autoIndentAction
+			,tab_action_group, action2, action4, action8, action12, action16,
+			darkModeAction
+			)
 
-			#to apply prev. active props to newly opened tabs
-			self.newAndOpenFuncs_(textEdit, insertAction, readOnlyAction, autoIndentAction
-				,tab_action_group, action2, action4, action8, action12, action16
-				)
-
-	def save_(self):
+	def save_(self, darkModeAction):
 		"""
 			this function is connected to 'saveAction'
 		"""
@@ -600,7 +763,7 @@ class Editor(QtGui.QMainWindow):
 		
 		#save the file with a new name if it does not exist
 		if not self.tabName in baseNames:
-			self.saveAs_()
+			self.saveAs_(darkModeAction)
 		#save it to the path from where it was opened
 		else:
 			for file_path in self.fileList:
@@ -610,7 +773,7 @@ class Editor(QtGui.QMainWindow):
 					saveFile.write(data)
 					saveFile.close()
 
-	def saveAs_(self):
+	def saveAs_(self, darkModeAction):
 		"""
 			this funciton is connected to 'saveAsAction'
 		"""
@@ -638,7 +801,8 @@ class Editor(QtGui.QMainWindow):
 			
 			#calling lexers on current tab
 			text_edit = self.tabWidget.currentWidget()
-			self.callLexers_(text_edit)
+			text_edit_index = self.tabWidget.currentIndex()
+			self.callLexers_(text_edit, text_edit_index, darkModeAction)
 
 	def newWindow_(self):
 		"""
@@ -837,10 +1001,10 @@ class Editor(QtGui.QMainWindow):
 
 		#enables the auto indentation
 		if autoIndentAction.isChecked() is True:
-				text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
-				for text_edit in text_edit_s:
-					if type(text_edit) == Qsci.QsciScintilla:
-						text_edit.setAutoIndent(False)
+			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
+			for text_edit in text_edit_s:
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setAutoIndent(True)
 		#disables the auto indentation
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 

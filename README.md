@@ -30,9 +30,6 @@ and you are ready to go.
 To start the editor:
 ```
 $ cd path_to_bytex.py
-```
-if it is in home directory to start the editor use:
-```
 $ python3 bytex.py
 ```
 and boom...

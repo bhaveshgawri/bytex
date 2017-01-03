@@ -347,7 +347,7 @@ class Editor(QtGui.QMainWindow):
 				self.cursorPosition_()#when tab changes
 		else:
 			self.cursor_position.setText("Line: - Index: -")
-			
+
 		#closes the editor if number of tabs is zero
 		if self.tabWidget.count() is 0:
 			sys.exit()

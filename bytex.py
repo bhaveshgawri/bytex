@@ -17,51 +17,63 @@ class Editor(QtGui.QMainWindow):
 		self.tabWidget.setMovable(True)
 		#self.tabWidget.setTabShape(QtGui.QTabWidget.Triangular)
 
+		self.statusBar = QtGui.QStatusBar(self)	
+		self.setStatusBar(self.statusBar)
+		self.cursor_position = QtGui.QLabel("")
+		self.statusBar.addPermanentWidget(self.cursor_position)
+
 #--------------------Edit Menu Actions-------------------#
 
 		undoAction = QtGui.QAction("Undo",self)
 		undoAction.setShortcut("Ctrl+z")
 		undoAction.setStatusTip("Undo the last change.")
 		undoAction.triggered.connect(self.undo_)
+		undoAction.hovered.connect(lambda: self.toolTip_("Undo the last change."))
 		
 		redoAction = QtGui.QAction("Redo",self)
 		redoAction.setShortcut("Ctrl+Shift+z")
 		redoAction.setStatusTip("Redo the last change.")
 		redoAction.triggered.connect(self.redo_)
-		
+		redoAction.hovered.connect(lambda: self.toolTip_("Redo the last change."))
+
 		cutAction = QtGui.QAction("Cut",self)
 		cutAction.setShortcut("Ctrl+x")
 		cutAction.setStatusTip("Cut the selected text.")
 		cutAction.triggered.connect(self.cut_)
+		cutAction.hovered.connect(lambda: self.toolTip_("Cut the selected text."))
 		
 		copyAction = QtGui.QAction("Copy",self)
 		copyAction.setShortcut("Ctrl+c")
 		copyAction.setStatusTip("Copy the selected text.")
 		copyAction.triggered.connect(self.copy_)
+		copyAction.hovered.connect(lambda: self.toolTip_("Copy the selected text."))
 		
 		pasteAction = QtGui.QAction("Paste",self)
 		pasteAction.setShortcut("Ctrl+v")
 		pasteAction.setStatusTip("Paste the text on clipboard at position of cursor.")
 		pasteAction.triggered.connect(self.paste_)
+		pasteAction.hovered.connect(lambda: self.toolTip_("Paste Text"))
 		
 		readOnlyAction = QtGui.QAction("Read Only",self, checkable = True)
 		readOnlyAction.setStatusTip("Make text read-only.")
 		readOnlyAction.triggered.connect(lambda: self.readOnly_(readOnlyAction))
-		
+
 		selectAllAction = QtGui.QAction("Select All",self)
 		selectAllAction.setShortcut("Ctrl+a")
 		selectAllAction.setStatusTip("Select all the text.")
 		selectAllAction.triggered.connect(self.selectAll_)
+		selectAllAction.hovered.connect(lambda: self.toolTip_("Select all the text."))
 
 		clearAction = QtGui.QAction("Clear Screen",self)
 		clearAction.setShortcut("Ctrl+l")
 		clearAction.setStatusTip("Clear all the text from screen.")
 		clearAction.triggered.connect(self.clear_)
-		
+		clearAction.hovered.connect(lambda: self.toolTip_("Clear all the text from screen."))
+
 		insertAction = QtGui.QAction("Insert Mode",self, checkable = True)
 		insertAction.setStatusTip("Toggle Insert Mode for all tabs.")
 		insertAction.triggered.connect(lambda: self.insert_(insertAction))
-		
+
 #-------------------//Edit Menu Actions//-----------------#
 
 #--------------------Format Menu Actions------------------#	
@@ -69,6 +81,7 @@ class Editor(QtGui.QMainWindow):
 		fontAction = QtGui.QAction("Fonts", self)
 		fontAction.setStatusTip("Set the font type, style and size.")
 		fontAction.triggered.connect(self.setFont_)
+		fontAction.hovered.connect(lambda: self.toolTip_("Set the font type, style and size."))
 
 		tab_action_group = QtGui.QActionGroup(self, exclusive = True)
 		action2 = tab_action_group.addAction(QtGui.QAction("Tab Width:2", self, checkable=True))
@@ -96,41 +109,52 @@ class Editor(QtGui.QMainWindow):
 		
 		terminalAction = QtGui.QAction("Open bash here", self)
 		terminalAction.setShortcut("shift+alt+t")
-		terminalAction.setToolTip("Open bash at the locaiton of file in current tab.")
+		terminalAction.setStatusTip("Open bash at the locaiton of active file.")
 		terminalAction.triggered.connect(self.openBash_)
+		terminalAction.hovered.connect(lambda: self.toolTip_("Open bash at the locaiton of file in current tab."))
 
 		newMarkDownFileAction = QtGui.QAction("Try Now",self)
 		newMarkDownFileAction.setShortcut("ctrl+shift+n")
 		newMarkDownFileAction.setStatusTip("Try the markdown editor now.")
 		newMarkDownFileAction.triggered.connect(self.openMarkEditor_)
+		newMarkDownFileAction.hovered.connect(lambda: self.toolTip_("Try the markdown editor now."))
 
 		openMarkDownFileAction = QtGui.QAction("Open File",self)
 		openMarkDownFileAction.setShortcut("ctrl+shift+o")
 		openMarkDownFileAction.setStatusTip("Open a file in markdown editor.")
 		openMarkDownFileAction.triggered.connect(self.openMarkEditorFile_)
+		openMarkDownFileAction.hovered.connect(lambda: self.toolTip_("Open a file in markdown editor."))
 
 		selectedTextSearchAction = QtGui.QAction("DuckDuckGo selected text.", self)
 		selectedTextSearchAction.setShortcut("alt+d")
 		selectedTextSearchAction.triggered.connect(self.selectedTextSearch_)
-		
-		stackOverflowAction = QtGui.QAction("Search stackOverflow", self)
+		selectedTextSearchAction.hovered.connect(lambda: self.toolTip_("Select text and click to go ducky"))
+
+		stackOverflowAction = QtGui.QAction("Search stackoverflow", self)
 		stackOverflowAction.setShortcut("alt+s")
+		stackOverflowAction.setStatusTip("Search questions on stackoverflow for requried word(s)")
 		stackOverflowAction.triggered.connect(self.stackOverFlowSearch_)
+		stackOverflowAction.hovered.connect(lambda: self.toolTip_("Search questions on stackoverflow for requried word(s)"))
 
 		gitHubAction = QtGui.QAction("Search GitHub", self)
 		gitHubAction.setShortcut("alt+g")
+		openMarkDownFileAction.setStatusTip("Search for code or user on GitHub")
 		gitHubAction.triggered.connect(self.gitHubSearch_)
+		gitHubAction.hovered.connect(lambda: self.toolTip_("Search for code or user on GitHub"))
 
 #-------------------//Tool Menu Actions//-----------------#	
 
 #----------------------bytex Actions----------------------#
 		
 		helpAction = QtGui.QAction("Help?",self)
+		helpAction.setStatusTip("Need Some Help")
 		helpAction.triggered.connect(self.help_)
+		helpAction.hovered.connect(lambda: self.toolTip_("Need some help?"))
 
 		contributeAction = QtGui.QAction("Contribute!",self)
 		contributeAction.setStatusTip("Make bytex better.")
 		contributeAction.triggered.connect(self.contribute_)
+		contributeAction.hovered.connect(lambda: self.toolTip_("Make bytex better."))
 
 #--------------------//bytex Actions//--------------------#	
 
@@ -153,55 +177,62 @@ class Editor(QtGui.QMainWindow):
 
 		newTabAction = QtGui.QAction("New File",self)
 		newTabAction.setShortcut("Ctrl+e")
-		newTabAction.setStatusTip("Create a new Document")
+		newTabAction.setStatusTip("Create a new file")
 		newTabAction.triggered.connect(lambda: self.newFile_(insertAction, readOnlyAction,
 			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16,
 			darkModeAction
 			))
+		newTabAction.hovered.connect(lambda: self.toolTip_("Create a new file"))
 
 		XTerminalAction = QtGui.QAction("New xTab", self)
 		XTerminalAction.setShortcut("shift+alt+x")
-		XTerminalAction.setToolTip("Open xTerm in a new tab.")
+		XTerminalAction.setStatusTip("Open XTerm in a new tab.")
 		XTerminalAction.triggered.connect(self.xTab_)
+		XTerminalAction.hovered.connect(lambda: self.toolTip_("Open XTerm"))
 
 		newWinAction = QtGui.QAction("New Window",self)
 		newWinAction.setShortcut("Ctrl+n")
-		newWinAction.setStatusTip("Open a new document in a new window")
+		newWinAction.setStatusTip("Open a new bytex Window")
 		newWinAction.triggered.connect(self.newWindow_)
+		newWinAction.hovered.connect(lambda: self.toolTip_("Open a new bytex Window"))
 		
 		openAction = QtGui.QAction("Open",self)
 		openAction.setShortcut("Ctrl+o")
-		openAction.setStatusTip("Open an existing document")
+		openAction.setStatusTip("Open an existing file")
 		openAction.triggered.connect(lambda: self.open_(insertAction, readOnlyAction, 
 			autoIndentAction,tab_action_group, action2, action4, action8, action12, action16,
 			darkModeAction
 			))
+		openAction.hovered.connect(lambda: self.toolTip_("Open other file"))
 		
 		saveAction = QtGui.QAction("Save",self)
 		saveAction.setShortcut("Ctrl+s")
-		saveAction.setStatusTip("Save this document")
+		saveAction.setStatusTip("Save this file")
 		saveAction.triggered.connect(lambda: self.save_(darkModeAction))
+		saveAction.hovered.connect(lambda: self.toolTip_("Save this file"))
 		
 		saveAsAction = QtGui.QAction("Save As...",self)
 		saveAsAction.setShortcut("Ctrl+Shift+s")
-		saveAsAction.setStatusTip("Save this document as...")
+		saveAsAction.setStatusTip("Save this file as...")
 		saveAsAction.triggered.connect(lambda: self.saveAs_(darkModeAction))
+		saveAsAction.hovered.connect(lambda: self.toolTip_("Save currennt file with different name"))
 		
 		closeAction = QtGui.QAction("Close",self)
 		closeAction.setShortcut("Ctrl+w")
-		closeAction.setStatusTip("Close the current document")
+		closeAction.setStatusTip("Close the current tab")
 		closeAction.triggered.connect(self.closeTab_)
 		self.tabWidget.tabCloseRequested.connect(self.tabWidget.removeTab)
 		#  ^without this line 'x' on tabs won't work.
+		closeAction.hovered.connect(lambda: self.toolTip_("Close the current tab"))
 
 		quitAction = QtGui.QAction("Quit",self)
 		quitAction.setShortcut("Ctrl+q")
-		quitAction.setStatusTip("Close all documents and EXIT.")
+		quitAction.setStatusTip("Close all tabs and EXIT.")
 		quitAction.triggered.connect(self.closeEditor_)
+		quitAction.hovered.connect(lambda: self.toolTip_("Close all tabs"))
 
 #------------------//File Menu Actions//-----------------#
 
-		statusBar = self.statusBar()
 
 #---------------------Menu Bar Creation-------------------#
 
@@ -306,11 +337,17 @@ class Editor(QtGui.QMainWindow):
 		
 		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
 			#changing the width of margin where numbersa are displayed
-			text__edit = self.tabWidget.currentWidget()
+			textEdit = self.tabWidget.currentWidget()
 			if self.tabWidget.count() > 0:
-				text__edit.cursorPositionChanged.connect(self.marginWidth_)
-				self.marginWidth_()
+				textEdit.cursorPositionChanged.connect(self.marginWidth_)
+				self.marginWidth_()#when tab changes
 
+				#update the cursor position
+				textEdit.cursorPositionChanged.connect(self.cursorPosition_)
+				self.cursorPosition_()#when tab changes
+		else:
+			self.cursor_position.setText("Line: - Index: -")
+			
 		#closes the editor if number of tabs is zero
 		if self.tabWidget.count() is 0:
 			sys.exit()
@@ -334,8 +371,8 @@ class Editor(QtGui.QMainWindow):
 			this function returns the selected text
 			in the current tab
 		"""
-		text__edit = self.tabWidget.currentWidget()
-		selectedString = text__edit.selectedText()
+		textEdit = self.tabWidget.currentWidget()
+		selectedString = textEdit.selectedText()
 		return selectedString
 
 	def setDefaultFont_(self, textEdit):
@@ -344,36 +381,45 @@ class Editor(QtGui.QMainWindow):
 			for the current tab and number margin 
 		"""
 		try:
-			font = QtGui.QFont("consolas", 14)
+			font = QtGui.QFont("ubuntu", 14)
 		except:
-			font = QtGui.QFont("consolas", 14)
+			font = QtGui.QFont("calibri", 14)
 		
 		textEdit.setFont(font)
 		textEdit.setMarginsFont(font)
 
 	def cursorPosition_(self):
 		"""
-			this function returns the current position
-			of the cursor
+			this function sets the current position
+			of the cursor on status bar
+			connected with 'cursorPositionChanged' signal
+			in nameOfWindow_ function and is called when cursor 
+			position changes
 		"""
-		text__edit = self.tabWidget.currentWidget()
-		line_, index_ = text__edit.getCursorPosition()
-		return line_, index_
-	
+		
+		#setting cursor position on status bar
+		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
+			textEdit = self.tabWidget.currentWidget()
+			line_, index_ = textEdit.getCursorPosition()
+			self.cursor_position.setText("Line: {} Index: {}".format(line_, index_))
+		else:
+			pass
+			#this part is written in nameOfWindow_() function
+
 	def marginWidth_(self):
 		"""
 			this funciton sets the width of the numbers margin
 			in all the tabs
-			connected with 'cursorPositionChanged' signal and 
-			gets called when cursor position changes
+			connected with 'cursorPositionChanged' signal
+			in nameOfWindow_ function
 		"""
-		text__edit = self.tabWidget.currentWidget()
+		textEdit = self.tabWidget.currentWidget()
 		try:
-			font = QtGui.QFont("consolas", 14)
+			font = QtGui.QFont("ubuntu", 14)
 		except:
-			font = QtGui.QFont("consolas", 14)
+			font = QtGui.QFont("calibri", 14)
 		#l is the number of lines in the current tab
-		l = text__edit.lines()
+		l = textEdit.lines()
 		if l < 10:
 			margin = QtGui.QFontMetrics(font).width("0")
 		elif l < 100:
@@ -384,6 +430,10 @@ class Editor(QtGui.QMainWindow):
 			margin = QtGui.QFontMetrics(font).width("0000")
 		elif l < 100000:
 			margin = QtGui.QFontMetrics(font).width("00000")
+		elif l < 1000000:
+			margin = QtGui.QFontMetrics(font).width("000000")
+		elif l < 10000000:
+			margin = QtGui.QFontMetrics(font).width("0000000")
 		else:
 			margin = QtGui.QFontMetrics(font).width("000000000")
 		
@@ -393,7 +443,7 @@ class Editor(QtGui.QMainWindow):
 				text_edit.setMarginWidth(1, margin + 10)
 
 		#PROBLEM in this function BUT the output is correct
-		#print(_line, _index) #after commenting the return statement
+		#try printing something and see output no console
 		#dont know why this function is getting called the no of times
 		#that tab has been visited
 		#if a tab is visited 3 times this func is getting called 3 times
@@ -440,6 +490,14 @@ class Editor(QtGui.QMainWindow):
 		textEdit.setAutoCompletionFillupsEnabled(True)
 		textEdit.setAutoCompletionCaseSensitivity(True)
 
+	def toolTip_(self, s):
+		"""
+			this function shows the tooltips 
+			when menubar items are hovered
+		"""
+
+		QtGui.QToolTip.showText(QtGui.QCursor.pos(), s)
+
 #--------------------//MISC. Functions//-------------------#
 
 #--------------------lexers and lexfuncs-------------------#
@@ -459,7 +517,7 @@ class Editor(QtGui.QMainWindow):
 			textEdit.setColor(QtGui.QColor("white"))
 
 			textEdit.setIndentationGuidesBackgroundColor(QtGui.QColor("#666666"))
-			#textEdit.setIndentationGuidesForegroundcolor()
+			#textEdit.setIndentationGuidesForegroundcolor(QtGui.QColor())
 
 			textEdit.setCaretLineBackgroundColor(QtGui.QColor("#444444"))
 			textEdit.setFoldMarginColors(QtGui.QColor("#444444"),QtGui.QColor("#444444"))
@@ -476,6 +534,8 @@ class Editor(QtGui.QMainWindow):
 
 			textEdit.setPaper(QtGui.QColor("white"))
 			textEdit.setColor(QtGui.QColor("black"))
+
+			textEdit.setIndentationGuidesBackgroundColor(QtGui.QColor("#eeeeee"))
 
 			textEdit.setCaretLineBackgroundColor(QtGui.QColor("#eeeeee"))
 			textEdit.setFoldMarginColors(QtGui.QColor("#eeeeee"),QtGui.QColor("#eeeeee"))
@@ -524,7 +584,7 @@ class Editor(QtGui.QMainWindow):
 	#python lexer
 	def pyLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerPython()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		lexer.setFont(QtGui.QFont("ubuntu", 13))
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			lexer.setColor(QtGui.QColor("#000000"), 1)   #comment
@@ -546,14 +606,18 @@ class Editor(QtGui.QMainWindow):
 	#c and cpp lexer
 	def cLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerCPP()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		try:
+			font = QtGui.QFont("ubuntu", 14)
+		except:
+			font = QtGui.QFont("calibri", 14)
+		lexer.setFont(font)
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			lexer.setColor(QtGui.QColor("#000000"), 1)   #comment
 			lexer.setColor(QtGui.QColor("orange"), 4) 	 #number
 			lexer.setColor(QtGui.QColor("#FFFF47"), 6)	 #  " "
 			lexer.setColor(QtGui.QColor("#FFFF47"), 7) 	 #  ' '
-			lexer.setColor(QtGui.QColor("red"), 12)	 #  '.... or "....  
+			lexer.setColor(QtGui.QColor("red"), 12)	 	 #  '... or "...  
 			lexer.setColor(QtGui.QColor("#FFFF47"), 20)	 #raw string
 			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
 			lexer.setColor(QtGui.QColor("#000000"), 2)   #comment line
@@ -570,14 +634,18 @@ class Editor(QtGui.QMainWindow):
 	#java lexer
 	def javaLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerJava()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		try:
+			font = QtGui.QFont("ubuntu", 14)
+		except:
+			font = QtGui.QFont("calibri", 14)
+		lexer.setFont(font)
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			lexer.setColor(QtGui.QColor("#000000"), 1)   #comment
 			lexer.setColor(QtGui.QColor("orange"), 4) 	 #number
 			lexer.setColor(QtGui.QColor("#FFFF47"), 6)	 #  " "
 			lexer.setColor(QtGui.QColor("#FFFF47"), 7) 	 #  ' '
-			lexer.setColor(QtGui.QColor("red"), 12)	 #  '.... or "....  
+			lexer.setColor(QtGui.QColor("red"), 12)		 #  '... or "...  
 			lexer.setColor(QtGui.QColor("#FFFF47"), 20)	 #raw string
 			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
 			lexer.setColor(QtGui.QColor("#000000"), 2)   #comment line
@@ -594,13 +662,17 @@ class Editor(QtGui.QMainWindow):
 	#javaScript lexer
 	def jsLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerJavaScript()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		try:
+			font = QtGui.QFont("ubuntu", 14)
+		except:
+			font = QtGui.QFont("calibri", 14)
+		lexer.setFont(font)
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			lexer.setColor(QtGui.QColor("orange"), 4) 	 #number
 			lexer.setColor(QtGui.QColor("#FFFF47"), 6)	 #  " "
 			lexer.setColor(QtGui.QColor("#FFFF47"), 7) 	 #  ' '
-			lexer.setColor(QtGui.QColor("red"), 12)	 #  '.... or "....  
+			lexer.setColor(QtGui.QColor("red"), 12)	 	 #  '... or "...  
 			lexer.setColor(QtGui.QColor("#FFFF47"), 20)	 #raw string
 			lexer.setColor(QtGui.QColor("cyan"), 5)		 #keyword
 			lexer.setColor(QtGui.QColor("#000000"), 2)   #comment line
@@ -617,7 +689,11 @@ class Editor(QtGui.QMainWindow):
 	#html lexer
 	def htmlLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerHTML()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		try:
+			font = QtGui.QFont("ubuntu", 14)
+		except:
+			font = QtGui.QFont("calibri", 14)
+		lexer.setFont(font)
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			lexer.setColor(QtGui.QColor("white"), 1)				
@@ -636,7 +712,11 @@ class Editor(QtGui.QMainWindow):
 	#css lexer
 	def cssLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerCSS()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		try:
+			font = QtGui.QFont("ubuntu", 14)
+		except:
+			font = QtGui.QFont("calibri", 14)
+		lexer.setFont(font)
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			"""
@@ -654,7 +734,11 @@ class Editor(QtGui.QMainWindow):
 	#xml lexer
 	def xmlLexer_(self, text_edit, text_edit_index, darkModeAction):
 		lexer = Qsci.QsciLexerXML()
-		lexer.setFont(QtGui.QFont("consolas", 13))
+		try:
+			font = QtGui.QFont("ubuntu", 14)
+		except:
+			font = QtGui.QFont("calibri", 14)
+		lexer.setFont(font)
 		if darkModeAction.isChecked() is True:
 			lexer.setPaper(QtGui.QColor("#333333"))
 			lexer.setColor(QtGui.QColor("white"), 1)
@@ -803,6 +887,7 @@ class Editor(QtGui.QMainWindow):
 			text_edit = self.tabWidget.currentWidget()
 			text_edit_index = self.tabWidget.currentIndex()
 			self.callLexers_(text_edit, text_edit_index, darkModeAction)
+			self.genColorProps_(text_edit, darkModeAction)
 
 	def newWindow_(self):
 		"""
@@ -932,14 +1017,14 @@ class Editor(QtGui.QMainWindow):
 		if insertAction.isChecked() is True:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-   				if type(text_edit) == Qsci.QsciScintilla:	
-   					text_edit.setOverwriteMode(True)
+				if type(text_edit) == Qsci.QsciScintilla:	
+					text_edit.setOverwriteMode(True)
 		#disable the insert mode in all tabs
 		else:
 			text_edit_s = (self.tabWidget.widget(i) for i in range(self.tabWidget.count())) 
 			for text_edit in text_edit_s:
-   				if type(text_edit) == Qsci.QsciScintilla:
-   					text_edit.setOverwriteMode(False)
+				if type(text_edit) == Qsci.QsciScintilla:
+					text_edit.setOverwriteMode(False)
 
 #------------------//Edit Menu Functions//----------------#
 
@@ -1078,7 +1163,7 @@ class Editor(QtGui.QMainWindow):
 			write relevnt keywords to dearch on stackoverflow 
 		"""
 
-		searchString, true = QtGui.QInputDialog.getText(self, 'stackOverflow.com', 'Enter query')
+		searchString, true = QtGui.QInputDialog.getText(self, 'stackOverflow.com', 'Search questions on stackoverflow tagged with word(s):')
 		if true:
 			webbrowser.open("http://stackoverflow.com/search?q={}".format(searchString))
 		else:
@@ -1091,7 +1176,7 @@ class Editor(QtGui.QMainWindow):
 			can seach anything on github 
 		"""
 
-		searchString, true = QtGui.QInputDialog.getText(self, 'github.com', 'Enter query')
+		searchString, true = QtGui.QInputDialog.getText(self, 'github.com', 'Enter of repository or user:')
 		if true:
 			webbrowser.open("https://github.com/search?utf8=✓&q={}".format(searchString))
 		else:

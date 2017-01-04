@@ -35,7 +35,7 @@ To start the editor:
 $ cd path_to_bytex.py
 $ python3 bytex.py
 ```
-but more preferrably after installing the requirements download the executable file of bytex from 
+but more preferrably if you don't want to install the listed modules download directly the executable file of bytex from 
 [here](https://drive.google.com/open?id=0B1o2cfjSr08fQjJPeEROZUprMDA).
 
 Give it executing permissions if it does not have it.

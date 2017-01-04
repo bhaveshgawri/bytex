@@ -401,7 +401,7 @@ class Editor(QtGui.QMainWindow):
 		if type(self.tabWidget.currentWidget()) == Qsci.QsciScintilla:
 			textEdit = self.tabWidget.currentWidget()
 			line_, index_ = textEdit.getCursorPosition()
-			self.cursor_position.setText("Line: {} Index: {}".format(line_, index_))
+			self.cursor_position.setText("Line: {} Index: {}".format(line_+1, index_))
 		else:
 			pass
 			#this part is written in nameOfWindow_() function
@@ -769,9 +769,9 @@ class Editor(QtGui.QMainWindow):
 
 		process  = QtCore.QProcess(self.tabWidget)
 		self.xterm = QtGui.QWidget(self.tabWidget)
-		self.tabWidget.addTab(self.xterm, "xTerm")
+		self.tabWidget.addTab(self.xterm, "XTerm")
 		self.tabWidget.setCurrentWidget(self.xterm)
-		process.start('xterm',['-into', str(self.tabWidget.currentWidget().winId())])
+		process.start('terminator',['-into', str(self.tabWidget.currentWidget().winId())])
 
 	def newFile_(self, insertAction, readOnlyAction, autoIndentAction
 		,tab_action_group, action2, action4, action8, action12, action16,

@@ -3,7 +3,7 @@
 >**a text editor in pyqt4**
 
 
-##Prerequisites and Installing
+## Prerequisites and Installing
 
 It will work with most of the linux distros and may also work for Windows[not checked].			
 Instructions for `apt` based distributions:
@@ -63,13 +63,13 @@ It will work if OS has XTerm.
 * Search GitHub, stackoverflow or any selected text in a tab from editor itself.
 
 ## Preview*
-######New Tab
+###### New Tab
 [![newTab.png](https://s28.postimg.org/qk1o6za99/new_Tab.png)](https://postimg.org/image/4kv9jrtex/)
 
-######Code Preview
+###### Code Preview
 [![codePreview.png](https://s28.postimg.org/iq12ll2gd/code_Preview.png)](https://postimg.org/image/7doh3strd)
 
-######Embedded XTerm
+###### Embedded XTerm
 [![XTerm.png](https://s28.postimg.org/t2ryleld9/XTerm.png)](https://postimg.org/image/v7cbmhmzt/)
 
 *[NOTE: Tabs and Menubar may look different in other Operating Systems.]
